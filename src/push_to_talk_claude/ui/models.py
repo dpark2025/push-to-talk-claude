@@ -26,7 +26,7 @@ class StatusPillConfig:
 # Default status pill configurations
 # Using single-width Unicode symbols to avoid terminal width calculation issues
 STATUS_PILLS = [
-    StatusPillConfig(RecordingStatus.RECORDING, "Recording", "●", "red", "$error"),
+    StatusPillConfig(RecordingStatus.RECORDING, "Recording", "⦿", "red", "$error"),
     StatusPillConfig(RecordingStatus.TRANSCRIBING, "Transcribing", "◐", "yellow", "$warning"),
     StatusPillConfig(RecordingStatus.INJECTING, "Injecting", "▶", "dodger_blue", "$primary"),
     StatusPillConfig(RecordingStatus.COMPLETE, "Complete", "✓", "green", "$success"),
