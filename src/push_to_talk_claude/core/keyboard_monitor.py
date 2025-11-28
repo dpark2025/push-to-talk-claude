@@ -96,6 +96,9 @@ class HotkeyState(Enum):
 class KeyboardMonitor:
     """Monitor keyboard for push-to-talk hotkey events."""
 
+    # Watchdog timeout - if key appears stuck, force release after this many seconds
+    STUCK_KEY_TIMEOUT = 5.0
+
     def __init__(
         self,
         hotkey: str,
@@ -126,6 +129,7 @@ class KeyboardMonitor:
         self._state_lock = threading.Lock()
         self._listener: Optional[Any] = None
         self._is_listening = threading.Event()
+        self._watchdog_timer: Optional[threading.Timer] = None
 
     def start(self) -> None:
         """Start listening for keyboard events. Non-blocking."""
@@ -138,20 +142,47 @@ class KeyboardMonitor:
             with self._state_lock:
                 if key == self._hotkey and self._state == HotkeyState.IDLE:
                     self._state = HotkeyState.PRESSED
+                    # Start watchdog timer in case release event is missed
+                    self._start_watchdog()
                     self._on_press()
 
         def on_release(key):
             with self._state_lock:
                 if key == self._hotkey and self._state == HotkeyState.PRESSED:
                     self._state = HotkeyState.IDLE
+                    self._cancel_watchdog()
                     self._on_release()
 
         self._listener = Listener(on_press=on_press, on_release=on_release)
         self._listener.start()
         self._is_listening.set()
 
+    def _start_watchdog(self) -> None:
+        """Start watchdog timer to detect stuck key."""
+        self._cancel_watchdog()
+        self._watchdog_timer = threading.Timer(
+            self.STUCK_KEY_TIMEOUT,
+            self._force_release
+        )
+        self._watchdog_timer.daemon = True
+        self._watchdog_timer.start()
+
+    def _cancel_watchdog(self) -> None:
+        """Cancel watchdog timer."""
+        if self._watchdog_timer is not None:
+            self._watchdog_timer.cancel()
+            self._watchdog_timer = None
+
+    def _force_release(self) -> None:
+        """Force key release if watchdog fires (key release event was missed)."""
+        with self._state_lock:
+            if self._state == HotkeyState.PRESSED:
+                self._state = HotkeyState.IDLE
+                self._on_release()
+
     def stop(self) -> None:
         """Stop listening and cleanup resources."""
+        self._cancel_watchdog()
         if self._listener is not None:
             self._is_listening.clear()
             self._listener.stop()
