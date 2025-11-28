@@ -11,6 +11,17 @@ Hands-free voice input for Claude Code on macOS.
 
 ## Quick Start
 
+**TL;DR** for experienced users:
+
+```bash
+brew install portaudio ffmpeg tmux
+git clone https://github.com/YOUR_USERNAME/push-to-talk-claude.git && cd push-to-talk-claude
+uv sync
+# Terminal 1: tmux new-session -s claude 'claude'
+# Terminal 2: uv run claude-voice
+# Hold Right-Ctrl to talk, release to send. Works from any window!
+```
+
 ### Prerequisites
 
 - macOS 11.0+ (Big Sur or later) with Apple Silicon recommended
@@ -36,30 +47,59 @@ uv sync
 
 ### Grant Permissions
 
-When prompted, grant these permissions in **System Settings > Privacy & Security**:
+The voice interface needs macOS permissions. Grant these in **System Settings > Privacy & Security**:
 
-1. **Microphone**: Allow your terminal app to access the microphone
-2. **Accessibility**: Add your terminal app (for keyboard monitoring)
+1. **Microphone**: Allow your terminal app (the one running `claude-voice`) to access the microphone
+2. **Accessibility**: Add your terminal app (for global keyboard monitoring)
+
+> **Tip**: Run `uv run claude-voice --check` to verify permissions are configured correctly.
 
 ### Usage
 
-You need **two separate terminals**:
+#### Step 1: Start Claude Code in tmux
+
+Open a terminal and run:
 
 ```bash
-# Terminal 1: Start Claude Code in tmux
 tmux new-session -s claude 'claude'
 ```
 
+#### Step 2: Start the Voice Interface
+
+Open a **second terminal window** (not a tmux pane) and run:
+
 ```bash
-# Terminal 2 (separate window, NOT in tmux): Start voice interface
 uv run claude-voice
 ```
 
-Then:
-1. **Press and hold** the Right Control key (or your configured hotkey)
-2. **Speak** your question or command
-3. **Release** the key
-4. Watch your words appear in Claude Code!
+> **Why two terminals?** The voice interface needs to run outside tmux to capture keyboard events globally. It injects text into tmux via `send-keys`.
+
+#### Step 3: Arrange Your Windows
+
+Position both terminals so you can see them simultaneously:
+
+```
+┌─────────────────────────────┬─────────────────────────────┐
+│                             │                             │
+│   Claude Code (tmux)        │   Voice Interface           │
+│                             │                             │
+│   Keep your focus here      │   Shows recording status    │
+│   ◀── your cursor           │   (just glance at it)       │
+│                             │                             │
+└─────────────────────────────┴─────────────────────────────┘
+```
+
+#### Step 4: Talk to Claude
+
+1. **Keep focus on the Claude terminal** - don't click away
+2. **Press and hold** the Right Control key (the hotkey works globally!)
+3. **Speak** your question or command
+4. **Release** the key
+5. Your words appear in Claude Code automatically
+
+> **Key insight**: The hotkey is detected system-wide. You don't need to switch to the voice terminal - just keep it visible for status feedback while you stay focused on Claude.
+
+> **First run note**: The first transcription takes longer (~2-5s) as Whisper downloads and initializes the model. Subsequent transcriptions are fast (~0.05s on Apple Silicon).
 
 ## Configuration
 
