@@ -8,6 +8,7 @@ Hands-free voice input for Claude Code on macOS.
 - **Local Speech Recognition**: Whisper runs entirely on your machine - no data leaves your computer
 - **Fast Transcription**: MPS-accelerated on Apple Silicon (~0.05s per transcription after warmup)
 - **Flexible Injection**: Type into focused window (default) or send to specific tmux pane
+- **Beautiful TUI**: Textual-based terminal UI with live recording timer, status indicators, and log viewer
 - **Customizable**: Configure hotkey, Whisper model, and injection target
 
 ## Quick Start
@@ -108,6 +109,24 @@ If you prefer to always send text to a specific tmux pane (regardless of focus),
    ```
 
 5. Hold the hotkey to speak - text injects into the tmux pane regardless of focus.
+
+### TUI Interface
+
+The voice interface displays a modern terminal UI with:
+
+- **Info Panel** (left): Shows hotkey, model, mode, and target configuration
+- **Status Panel** (right): Visual indicators for Recording, Transcribing, Injecting, Complete, and Error states
+- **Recording Timer**: Live duration counter during recording with warning at 50 seconds
+- **Footer**: Keyboard shortcuts
+
+**Keyboard Shortcuts**:
+| Key | Action |
+|-----|--------|
+| `L` | Toggle log viewer (shows recent activity) |
+| `Q` | Quit the application |
+| `Ctrl+\` | Open options/command palette |
+
+The TUI uses the Catppuccin Mocha theme for a comfortable dark mode experience.
 
 ## Configuration
 

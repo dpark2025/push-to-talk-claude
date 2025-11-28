@@ -58,7 +58,9 @@ class TextToSpeech:
             self._process = subprocess.Popen(
                 cmd,
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL
+                stderr=subprocess.DEVNULL,
+                close_fds=True,
+                start_new_session=True,
             )
 
         if not async_mode:

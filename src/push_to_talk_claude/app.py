@@ -6,6 +6,7 @@ from datetime import datetime
 import signal
 import sys
 import logging
+import threading
 
 from .core.keyboard_monitor import KeyboardMonitor
 from .core.audio_capture import AudioCapture
@@ -20,6 +21,7 @@ from .utils.session_detector import SessionDetector
 from .ui.indicators import RecordingIndicator
 from .ui.notifications import NotificationManager
 from .ui.audio_feedback import AudioFeedback
+from .ui.tui_app import PushToTalkTUI
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +56,10 @@ class App:
         self.notifications = NotificationManager()
         self.audio_feedback = AudioFeedback(self.config.push_to_talk.audio_feedback)
 
+        # TUI (initialized after session_manager is available)
+        self.tui: Optional[PushToTalkTUI] = None
+        self._use_tui = True  # Flag to enable/disable TUI mode
+
         # Core components (initialized later)
         self.keyboard_monitor: Optional[KeyboardMonitor] = None
         self.audio_capture: Optional[AudioCapture] = None
@@ -67,6 +73,7 @@ class App:
         self.audio_capture = AudioCapture()
 
         # Speech to text with config
+        # Uses subprocess-based transcription to avoid FD conflicts with Textual TUI
         self.speech_to_text = SpeechToText(
             model_name=self.config.whisper.model,
             device=self.config.whisper.device,
@@ -119,6 +126,13 @@ class App:
             on_release=self._on_hotkey_release
         )
 
+        # Initialize TUI if enabled
+        if self._use_tui:
+            self.tui = PushToTalkTUI(
+                config=self.config,
+                session_manager=self.session_manager
+            )
+
     def check_prerequisites(self) -> bool:
         """
         Check all prerequisites before starting.
@@ -162,7 +176,8 @@ class App:
                 return False
 
             logger.info(f"Found Claude session: {claude_session.target_string}")
-            self.notifications.success(f"Found Claude session: {claude_session.target_string}")
+            if not self._use_tui:
+                self.notifications.success(f"Found Claude session: {claude_session.target_string}")
         else:
             logger.info("Using focused injection mode (typing into active window)")
 
@@ -188,12 +203,13 @@ class App:
 
         self._running = True
 
-        # Show startup banner
-        self.notifications.startup_banner(
-            hotkey=self.config.push_to_talk.hotkey,
-            model=self.config.whisper.model,
-            injection_mode=self.config.injection.mode
-        )
+        # Show startup banner only in legacy (non-TUI) mode
+        if not self._use_tui:
+            self.notifications.startup_banner(
+                hotkey=self.config.push_to_talk.hotkey,
+                model=self.config.whisper.model,
+                injection_mode=self.config.injection.mode
+            )
 
     def stop(self) -> None:
         """Stop the voice interface and cleanup."""
@@ -211,8 +227,9 @@ class App:
 
         self._running = False
 
-        # Show shutdown message
-        self.notifications.shutdown_message()
+        # Show shutdown message only in legacy (non-TUI) mode
+        if not self._use_tui:
+            self.notifications.shutdown_message()
 
     def run(self) -> int:
         """
@@ -230,14 +247,19 @@ class App:
             # Start the application
             self.start()
 
-            # Block until interrupted
-            while self._running and not self._shutdown_requested:
-                try:
-                    signal.pause()
-                except AttributeError:
-                    # signal.pause() not available on Windows
-                    import time
-                    time.sleep(0.1)
+            # Run based on mode
+            if self._use_tui and self.tui:
+                # Textual TUI mode - run the TUI (blocking)
+                self.tui.run()
+            else:
+                # Legacy mode - Block until interrupted
+                while self._running and not self._shutdown_requested:
+                    try:
+                        signal.pause()
+                    except AttributeError:
+                        # signal.pause() not available on Windows
+                        import time
+                        time.sleep(0.1)
 
             return 0
 
@@ -283,17 +305,21 @@ class App:
         """Handle recording state changes."""
         logger.debug(f"Recording state changed: {status}")
 
-        # Update indicator based on status
-        if status == RecordingStatus.RECORDING:
-            self.indicator.show_recording()
-        elif status == RecordingStatus.TRANSCRIBING:
-            self.indicator.show_transcribing()
-        elif status == RecordingStatus.INJECTING:
-            self.indicator.show_injecting()
-        elif status == RecordingStatus.COMPLETE:
-            self.indicator.hide()
-        elif status == RecordingStatus.ERROR:
-            self.indicator.hide()
+        # Route to TUI if available and running
+        if self._use_tui and self.tui and self.tui.is_running:
+            self.tui.handle_state_change(status)
+        else:
+            # Update indicator based on status (legacy mode)
+            if status == RecordingStatus.RECORDING:
+                self.indicator.show_recording()
+            elif status == RecordingStatus.TRANSCRIBING:
+                self.indicator.show_transcribing()
+            elif status == RecordingStatus.INJECTING:
+                self.indicator.show_injecting()
+            elif status == RecordingStatus.COMPLETE:
+                self.indicator.hide()
+            elif status == RecordingStatus.ERROR:
+                self.indicator.hide()
 
     def _on_transcription(self, text: str) -> None:
         """Handle completed transcription."""
@@ -301,7 +327,12 @@ class App:
             logger.debug(f"Transcription received: {text}")
 
         if text and text.strip():
-            self.indicator.show_complete(text)
+            # Route to TUI if available
+            if self._use_tui and self.tui:
+                self.tui.handle_transcription(text)
+            else:
+                self.indicator.show_complete(text)
+
             logger.info(f"Transcription: {text[:50]}...")
 
             # Save transcript if enabled
@@ -330,13 +361,23 @@ class App:
         """Handle errors."""
         logger.error(f"Error: {error}")
         self.audio_feedback.play_error()
-        self.notifications.error(error)
-        self.indicator.show_error(error)
+
+        # Route to TUI if available
+        if self._use_tui and self.tui:
+            self.tui.handle_error(error)
+        else:
+            self.notifications.error(error)
+            self.indicator.show_error(error)
 
     def _on_skipped(self, reason: str) -> None:
         """Handle skipped recordings (too short, no speech, etc.)."""
         logger.debug(f"Recording skipped: {reason}")
-        self.indicator.show_skipped(reason)
+
+        # Route to TUI if available
+        if self._use_tui and self.tui:
+            self.tui.handle_skipped(reason)
+        else:
+            self.indicator.show_skipped(reason)
 
     def _setup_signal_handlers(self) -> None:
         """Setup SIGINT/SIGTERM handlers for graceful shutdown."""

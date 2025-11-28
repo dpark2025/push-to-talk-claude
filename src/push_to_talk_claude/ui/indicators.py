@@ -1,3 +1,15 @@
+"""Legacy Rich-based recording indicators.
+
+DEPRECATED: This module is deprecated in favor of the Textual TUI.
+The Textual TUI provides a better user experience with:
+- Real-time status pills
+- Live recording timer
+- Log modal with history
+
+This module is kept for backward compatibility when TUI mode is disabled.
+"""
+
+import warnings
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
