@@ -425,6 +425,15 @@ class App:
             return self.session_manager.auto_return
         return False
 
+    def toggle_transcript_logging(self) -> tuple[bool, str]:
+        """Toggle transcript logging setting.
+
+        Returns:
+            Tuple of (new enabled value, path to transcripts dir)
+        """
+        self.config.logging.save_transcripts = not self.config.logging.save_transcripts
+        return (self.config.logging.save_transcripts, self.config.logging.transcripts_dir)
+
     def _setup_signal_handlers(self) -> None:
         """Setup SIGINT/SIGTERM handlers for graceful shutdown."""
         def signal_handler(signum, frame):

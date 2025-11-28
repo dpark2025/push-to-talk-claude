@@ -37,13 +37,13 @@ class InfoPanel(Container):
             yield Static(f"Model: {self.app_info.whisper_model}", id="model-info")
             yield Static(f"Mode: {self.app_info.injection_mode}", id="mode-info")
             yield Static(f"Target: {self.app_info.target_info}", id="target-info")
-            yield Static(f"Transcript Logging: {self.app_info.transcript_logging}", id="transcript-logging-info")
 
         yield Static("", id="spacer-2")
 
         # Runtime-toggleable options (outside the startup config box)
         auto_return_text = "ON" if self.app_info.auto_return else "OFF"
         yield Static(f"Auto-Return: {auto_return_text}", id="auto-return-info")
+        yield Static(f"Transcript Logging: {self.app_info.transcript_logging}", id="transcript-logging-info")
 
         yield Static("", id="spacer-3")
         yield RecordingTimer(id="recording-timer")
@@ -82,6 +82,20 @@ class InfoPanel(Container):
         self.app_info.auto_return = enabled
         auto_return_text = "ON" if enabled else "OFF"
         self.query_one("#auto-return-info", Static).update(f"Auto-Return: {auto_return_text}")
+
+    def update_transcript_logging(self, enabled: bool, path: str) -> None:
+        """Update the transcript logging indicator.
+
+        Args:
+            enabled: Whether transcript logging is enabled
+            path: Path to transcripts directory
+        """
+        if enabled:
+            self.app_info.transcript_logging = path
+            self.query_one("#transcript-logging-info", Static).update(f"Transcript Logging: {path}")
+        else:
+            self.app_info.transcript_logging = "OFF"
+            self.query_one("#transcript-logging-info", Static).update("Transcript Logging: OFF")
 
     def get_timer(self) -> RecordingTimer:
         """Get the recording timer widget.

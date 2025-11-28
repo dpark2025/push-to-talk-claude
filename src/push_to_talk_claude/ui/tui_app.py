@@ -29,8 +29,9 @@ class PushToTalkTUI(App):
     THEME = "catppuccin-mocha"
 
     BINDINGS = [
-        Binding("l", "toggle_logs", "Logs"),
         Binding("a", "toggle_auto_return", "Auto-Return"),
+        Binding("t", "toggle_transcript_logging", "Transcript Logging"),
+        Binding("l", "toggle_logs", "Console Logs"),
         Binding("q", "quit", "Quit"),
         # Rename default command palette from "Palette" to "Options"
         Binding("ctrl+backslash", "command_palette", "Options"),
@@ -86,6 +87,21 @@ class PushToTalkTUI(App):
             status_text = "ON" if new_value else "OFF"
             self.notify(f"Auto-Return: {status_text}", timeout=2)
             self.log_buffer.append("INFO", f"Auto-Return toggled to: {status_text}")
+
+    def action_toggle_transcript_logging(self) -> None:
+        """Toggle transcript logging setting via app controller."""
+        if self.app_controller:
+            new_value, path = self.app_controller.toggle_transcript_logging()
+            # Update InfoPanel indicator
+            info_panel = self.query_one(InfoPanel)
+            info_panel.update_transcript_logging(new_value, path)
+            # Show notification
+            if new_value:
+                self.notify(f"Transcript Logging: {path}", timeout=2)
+                self.log_buffer.append("INFO", f"Transcript logging enabled: {path}")
+            else:
+                self.notify("Transcript Logging: OFF", timeout=2)
+                self.log_buffer.append("INFO", "Transcript logging disabled")
 
     def handle_state_change(self, status: RecordingStatus) -> None:
         """Handle recording state change from background thread.

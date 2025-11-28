@@ -94,7 +94,7 @@ class AppInfo:
         if config.logging.save_transcripts:
             transcript_logging = config.logging.transcripts_dir
         else:
-            transcript_logging = "DISABLED"
+            transcript_logging = "OFF"
 
         return cls(
             hotkey=config.push_to_talk.hotkey,
