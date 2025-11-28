@@ -66,6 +66,11 @@ class LoggingConfig:
 
 
 @dataclass
+class UIConfig:
+    theme: str = "catppuccin-mocha"  # Textual theme name
+
+
+@dataclass
 class Config:
     push_to_talk: PushToTalkConfig
     whisper: WhisperConfig
@@ -74,6 +79,7 @@ class Config:
     tts: TTSConfig
     security: SecurityConfig
     logging: LoggingConfig
+    ui: UIConfig
 
     @classmethod
     def ensure_config_exists(cls) -> Path:
@@ -118,7 +124,8 @@ class Config:
             tmux=TmuxConfig(**data.get('tmux', {})),
             tts=TTSConfig(**data.get('tts', {})),
             security=SecurityConfig(**data.get('security', {})),
-            logging=LoggingConfig(**data.get('logging', {}))
+            logging=LoggingConfig(**data.get('logging', {})),
+            ui=UIConfig(**data.get('ui', {}))
         )
 
     @classmethod
@@ -131,7 +138,8 @@ class Config:
             tmux=TmuxConfig(),
             tts=TTSConfig(),
             security=SecurityConfig(),
-            logging=LoggingConfig()
+            logging=LoggingConfig(),
+            ui=UIConfig()
         )
 
     def save(self, path: Path) -> None:
@@ -145,7 +153,8 @@ class Config:
             'tmux': asdict(self.tmux),
             'tts': asdict(self.tts),
             'security': asdict(self.security),
-            'logging': asdict(self.logging)
+            'logging': asdict(self.logging),
+            'ui': asdict(self.ui)
         }
 
         with open(path, 'w') as f:

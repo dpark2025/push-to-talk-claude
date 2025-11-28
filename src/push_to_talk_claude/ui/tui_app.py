@@ -51,13 +51,23 @@ class PushToTalkTUI(App):
             app_controller: Parent App instance for toggle operations
         """
         super().__init__(**kwargs)
-        self.theme = "catppuccin-mocha"
+        self.theme = config.ui.theme  # Load theme from config
         self.config = config
         self.session_manager = session_manager
         self.app_controller = app_controller
         self.app_info = AppInfo.from_config(config)
         self.log_buffer = LogBuffer()
         self._log_modal_visible = False
+
+    def watch_theme(self, theme: str) -> None:
+        """Save theme changes to config file."""
+        if self.config.ui.theme != theme:
+            self.config.ui.theme = theme
+            # Save to config file
+            from push_to_talk_claude.utils.config import Config
+            config_path = Config.ensure_config_exists()
+            self.config.save(config_path)
+            self.log_buffer.append("INFO", f"Theme changed to: {theme}")
 
     def compose(self) -> ComposeResult:
         """Compose the main layout with info and status panels."""

@@ -81,3 +81,10 @@ logging:
 
   # Directory for saved transcriptions (relative to cwd or absolute)
   transcripts_dir: ".tts-transcriptions"
+
+# UI settings
+ui:
+  # Textual theme (changes persist when modified via command palette)
+  # Options: textual-dark, textual-light, catppuccin-mocha, catppuccin-latte,
+  #          dracula, monokai, nord, gruvbox, tokyo-night, etc.
+  theme: "catppuccin-mocha"
