@@ -14,7 +14,8 @@ class StatusPill(Static):
     def __init__(
         self,
         label: str,
-        emoji: str,
+        icon: str,
+        icon_color: str,
         color: str,
         status: RecordingStatus,
         **kwargs,
@@ -23,13 +24,16 @@ class StatusPill(Static):
 
         Args:
             label: Display text (e.g., "Recording")
-            emoji: Emoji indicator (e.g., "🔴")
+            icon: Icon character (e.g., "●")
+            icon_color: Rich markup color for the icon (e.g., "red")
             color: CSS color variable when active (e.g., "$error")
             status: The RecordingStatus this pill represents
         """
-        super().__init__(f"{emoji} {label}", **kwargs)
+        # Use Rich markup to colorize the icon
+        super().__init__(f"[{icon_color}]{icon}[/{icon_color}] {label}", **kwargs)
         self.label_text = label
-        self.emoji = emoji
+        self.icon = icon
+        self.icon_color = icon_color
         self.color = color
         self.status = status
 

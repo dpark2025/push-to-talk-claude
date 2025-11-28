@@ -24,7 +24,8 @@ class StatusPanel(Container):
         for config in STATUS_PILLS:
             pill = StatusPill(
                 label=config.label,
-                emoji=config.emoji,
+                icon=config.icon,
+                icon_color=config.icon_color,
                 color=config.color,
                 status=config.status,
                 id=f"pill-{config.status.value}",

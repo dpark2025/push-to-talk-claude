@@ -18,19 +18,20 @@ class StatusPillConfig:
 
     status: RecordingStatus
     label: str
-    emoji: str
-    color: str  # Textual CSS color variable
+    icon: str
+    icon_color: str  # Rich markup color for the icon
+    color: str  # Textual CSS color variable for active state
 
 
 # Default status pill configurations
 # Using single-width Unicode symbols to avoid terminal width calculation issues
 STATUS_PILLS = [
-    StatusPillConfig(RecordingStatus.RECORDING, "Recording", "●", "$error"),
-    StatusPillConfig(RecordingStatus.TRANSCRIBING, "Transcribing", "◐", "$warning"),
-    StatusPillConfig(RecordingStatus.INJECTING, "Injecting", "▶", "$primary"),
-    StatusPillConfig(RecordingStatus.COMPLETE, "Complete", "✓", "$success"),
-    StatusPillConfig(RecordingStatus.ERROR, "Error", "✗", "$error"),
-    StatusPillConfig(RecordingStatus.IDLE, "Skipped", "»", "$surface"),
+    StatusPillConfig(RecordingStatus.RECORDING, "Recording", "●", "red", "$error"),
+    StatusPillConfig(RecordingStatus.TRANSCRIBING, "Transcribing", "◐", "yellow", "$warning"),
+    StatusPillConfig(RecordingStatus.INJECTING, "Injecting", "▶", "dodger_blue", "$primary"),
+    StatusPillConfig(RecordingStatus.COMPLETE, "Complete", "✓", "green", "$success"),
+    StatusPillConfig(RecordingStatus.ERROR, "Error", "✗", "red", "$error"),
+    StatusPillConfig(RecordingStatus.IDLE, "Skipped", "»", "dim", "$surface"),
 ]
 
 
