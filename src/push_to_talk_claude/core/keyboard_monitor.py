@@ -96,8 +96,11 @@ class HotkeyState(Enum):
 class KeyboardMonitor:
     """Monitor keyboard for push-to-talk hotkey events."""
 
-    # Watchdog timeout - if key appears stuck, force release after this many seconds
-    STUCK_KEY_TIMEOUT = 5.0
+    # Watchdog timeout - fallback if polling fails (e.g., Quartz unavailable)
+    STUCK_KEY_TIMEOUT = 30.0
+
+    # Polling interval for checking key state (more reliable than release events)
+    POLL_INTERVAL = 0.1  # 100ms
 
     def __init__(
         self,
@@ -130,6 +133,8 @@ class KeyboardMonitor:
         self._listener: Optional[Any] = None
         self._is_listening = threading.Event()
         self._watchdog_timer: Optional[threading.Timer] = None
+        self._poll_thread: Optional[threading.Thread] = None
+        self._stop_polling = threading.Event()
 
     def start(self) -> None:
         """Start listening for keyboard events. Non-blocking."""
@@ -144,6 +149,8 @@ class KeyboardMonitor:
                     self._state = HotkeyState.PRESSED
                     # Start watchdog timer in case release event is missed
                     self._start_watchdog()
+                    # Start polling for key release (more reliable than events with Textual)
+                    self._start_polling()
                     self._on_press()
 
         def on_release(key):
@@ -151,11 +158,85 @@ class KeyboardMonitor:
                 if key == self._hotkey and self._state == HotkeyState.PRESSED:
                     self._state = HotkeyState.IDLE
                     self._cancel_watchdog()
+                    self._stop_polling.set()
                     self._on_release()
 
         self._listener = Listener(on_press=on_press, on_release=on_release)
         self._listener.start()
         self._is_listening.set()
+
+    def _start_polling(self) -> None:
+        """Start polling thread to detect key release."""
+        self._stop_polling.clear()
+        self._poll_thread = threading.Thread(target=self._poll_key_state, daemon=True)
+        self._poll_thread.start()
+
+    def _poll_key_state(self) -> None:
+        """Poll keyboard state to detect when key is released.
+
+        This is more reliable than relying on release events when Textual
+        is controlling the terminal.
+        """
+        import time
+
+        while not self._stop_polling.is_set():
+            time.sleep(self.POLL_INTERVAL)
+
+            # Check if key is still pressed using Quartz (macOS)
+            if not self._is_key_pressed():
+                with self._state_lock:
+                    if self._state == HotkeyState.PRESSED:
+                        self._state = HotkeyState.IDLE
+                        self._cancel_watchdog()
+                        self._on_release()
+                break
+
+    def _is_key_pressed(self) -> bool:
+        """Check if the hotkey is currently pressed using system APIs."""
+        try:
+            # Use Quartz on macOS to check modifier key state
+            import Quartz
+
+            # Map hotkey names to Quartz modifier flags
+            modifier_map = {
+                "ctrl_r": Quartz.kCGEventFlagMaskControl,
+                "ctrl_l": Quartz.kCGEventFlagMaskControl,
+                "alt_r": Quartz.kCGEventFlagMaskAlternate,
+                "alt_l": Quartz.kCGEventFlagMaskAlternate,
+                "cmd_r": Quartz.kCGEventFlagMaskCommand,
+                "cmd_l": Quartz.kCGEventFlagMaskCommand,
+                "shift_r": Quartz.kCGEventFlagMaskShift,
+                "shift_l": Quartz.kCGEventFlagMaskShift,
+            }
+
+            if self._hotkey_name in modifier_map:
+                # Get current modifier flags
+                flags = Quartz.CGEventSourceFlagsState(
+                    Quartz.kCGEventSourceStateHIDSystemState
+                )
+                return bool(flags & modifier_map[self._hotkey_name])
+
+            # For function keys, check using CGEventSourceKeyState
+            # Map F-key names to key codes
+            fkey_map = {
+                "f1": 122, "f2": 120, "f3": 99, "f4": 118,
+                "f5": 96, "f6": 97, "f7": 98, "f8": 100,
+                "f9": 101, "f10": 109, "f11": 103, "f12": 111,
+                "f13": 105, "f14": 107, "f15": 113, "f16": 106,
+                "f17": 64, "f18": 79, "f19": 80, "f20": 90,
+            }
+
+            if self._hotkey_name in fkey_map:
+                return Quartz.CGEventSourceKeyState(
+                    Quartz.kCGEventSourceStateHIDSystemState,
+                    fkey_map[self._hotkey_name]
+                )
+
+            # Default: assume still pressed
+            return True
+        except Exception:
+            # If Quartz not available, assume still pressed
+            return True
 
     def _start_watchdog(self) -> None:
         """Start watchdog timer to detect stuck key."""
@@ -183,9 +264,17 @@ class KeyboardMonitor:
     def stop(self) -> None:
         """Stop listening and cleanup resources."""
         self._cancel_watchdog()
+        self._stop_polling.set()  # Stop polling thread
         if self._listener is not None:
             self._is_listening.clear()
-            self._listener.stop()
+            try:
+                # Stop the listener - this signals it to stop
+                self._listener.stop()
+                # Join with timeout to prevent hanging
+                if hasattr(self._listener, 'join'):
+                    self._listener.join(timeout=1.0)
+            except Exception:
+                pass  # Ignore errors during cleanup
             self._listener = None
             with self._state_lock:
                 self._state = HotkeyState.IDLE

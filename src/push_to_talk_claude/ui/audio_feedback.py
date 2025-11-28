@@ -66,11 +66,14 @@ class AudioFeedback:
 
         with self._lock:
             # Run async so we don't block
+            # Use close_fds and start_new_session to prevent FD conflicts with Textual TUI
             try:
                 self._current_process = subprocess.Popen(
                     ["afplay", sound_path],
                     stdout=subprocess.DEVNULL,
-                    stderr=subprocess.DEVNULL
+                    stderr=subprocess.DEVNULL,
+                    close_fds=True,
+                    start_new_session=True,
                 )
             except FileNotFoundError:
                 # afplay not available, silently skip

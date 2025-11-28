@@ -1,0 +1,206 @@
+/* Textual TUI Styles for Push-to-Talk Claude */
+
+/* ============================================
+   Status Pill Styles
+   ============================================ */
+
+StatusPill {
+    width: 100%;
+    height: 3;
+    padding: 0 2;
+    text-align: center;
+    border: round $surface-lighten-2;
+    background: $surface;
+    color: $text-muted;
+    margin: 1 0;
+}
+
+StatusPill.active {
+    background: $primary;
+    color: $text;
+    border: round $primary-lighten-2;
+}
+
+/* Status-specific active colors */
+#pill-recording.active {
+    background: $error;
+    border: round $error-lighten-2;
+}
+
+#pill-transcribing.active {
+    background: $warning;
+    border: round $warning-lighten-2;
+}
+
+#pill-injecting.active {
+    background: $primary;
+    border: round $primary-lighten-2;
+}
+
+#pill-complete.active {
+    background: $success;
+    border: round $success-lighten-2;
+}
+
+#pill-error.active {
+    background: $error;
+    border: round $error-lighten-2;
+}
+
+#pill-idle.active {
+    background: $surface-lighten-1;
+    border: round $surface-lighten-3;
+}
+
+/* ============================================
+   Status Panel Styles
+   ============================================ */
+
+StatusPanel {
+    width: 1fr;
+    height: 100%;
+    padding: 1;
+    border: solid #00ff00;
+    background: $surface-darken-1;
+}
+
+/* ============================================
+   Recording Timer Styles
+   ============================================ */
+
+RecordingTimer {
+    width: 100%;
+    height: 3;
+    text-align: center;
+    padding: 0 2;
+    border: round $surface-lighten-2;
+    background: $surface;
+    color: $text-muted;
+}
+
+RecordingTimer.active {
+    background: $primary-darken-2;
+    color: $text;
+    border: round $primary;
+}
+
+RecordingTimer.warning {
+    background: $warning-darken-2;
+    color: $text;
+    border: round $warning;
+}
+
+/* ============================================
+   Log Modal Styles
+   ============================================ */
+
+LogModal {
+    background: $surface 80%;
+    align: center middle;
+}
+
+#log-container {
+    width: 80%;
+    height: 80%;
+    background: $surface;
+    border: thick $primary;
+    padding: 1;
+}
+
+#log-view {
+    width: 100%;
+    height: 100%;
+    scrollbar-gutter: stable;
+}
+
+/* ============================================
+   Layout Styles
+   ============================================ */
+
+#main-layout {
+    width: 100%;
+    height: 100%;
+}
+
+InfoPanel {
+    width: 2fr;
+    height: 100%;
+    padding: 1;
+    border: solid #00ff00;
+    background: $surface-darken-1;
+}
+
+#title {
+    text-style: bold;
+    color: #00ff00;
+    background: $surface-darken-2;
+    padding: 1 2;
+    margin-bottom: 1;
+    text-align: center;
+}
+
+#hotkey-info {
+    color: #ffff00;
+    text-style: bold;
+    padding: 0 1;
+}
+
+#model-info {
+    color: #00ffff;
+    padding: 0 1;
+}
+
+#mode-info {
+    color: #ff88ff;
+    padding: 0 1;
+}
+
+#target-info {
+    color: #88ff88;
+    padding: 0 1;
+}
+
+#divider {
+    color: #00ff00;
+    margin: 1 0;
+}
+
+#instruction-1 {
+    color: #ff6666;
+    text-style: bold;
+    padding: 0 1;
+}
+
+/* ============================================
+   Footer Styles - Options Style
+   ============================================ */
+
+Footer {
+    background: $surface-darken-1;
+    height: 1;
+}
+
+FooterKey {
+    background: transparent;
+    padding: 0 1;
+}
+
+FooterKey > .footer-key--key {
+    background: #00ff00;
+    color: black;
+    text-style: bold;
+    padding: 0 1;
+}
+
+FooterKey > .footer-key--description {
+    color: #aaffaa;
+    padding: 0 1;
+}
+
+FooterKey:hover {
+    background: $surface-lighten-1;
+}
+
+FooterKey:hover > .footer-key--key {
+    background: #88ff88;
+}
