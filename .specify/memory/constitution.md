@@ -103,7 +103,7 @@ Treat all input as potentially malicious.
 **Security Requirements:**
 - Sanitize transcribed text before tmux injection
 - Escape shell metacharacters
-- Limit input length (default: 1000 chars)
+- Limit input length (default: 500 chars)
 - Validate file paths
 - NEVER eval() or exec() user input
 
