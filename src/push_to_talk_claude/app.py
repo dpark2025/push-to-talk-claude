@@ -429,10 +429,11 @@ class App:
         """Toggle transcript logging setting.
 
         Returns:
-            Tuple of (new enabled value, path to transcripts dir)
+            Tuple of (new enabled value, full path to transcripts dir)
         """
         self.config.logging.save_transcripts = not self.config.logging.save_transcripts
-        return (self.config.logging.save_transcripts, self.config.logging.transcripts_dir)
+        full_path = str(Path(self.config.logging.transcripts_dir).resolve())
+        return (self.config.logging.save_transcripts, full_path)
 
     def _setup_signal_handlers(self) -> None:
         """Setup SIGINT/SIGTERM handlers for graceful shutdown."""

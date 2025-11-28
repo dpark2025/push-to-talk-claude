@@ -179,8 +179,13 @@ StartupConfigBox {
 }
 
 #transcript-logging-info {
-    color: #888888;
+    color: #666666;
     padding: 0 1;
+}
+
+#transcript-logging-info.enabled {
+    color: #ffaa00;
+    text-style: bold;
 }
 
 #auto-return-info {

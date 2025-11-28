@@ -92,7 +92,8 @@ class AppInfo:
             target = f"{config.tmux.session_name}:{config.tmux.window_index}.{config.tmux.pane_index}"
 
         if config.logging.save_transcripts:
-            transcript_logging = config.logging.transcripts_dir
+            from pathlib import Path
+            transcript_logging = str(Path(config.logging.transcripts_dir).resolve())
         else:
             transcript_logging = "OFF"
 

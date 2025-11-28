@@ -43,7 +43,13 @@ class InfoPanel(Container):
         # Runtime-toggleable options (outside the startup config box)
         auto_return_text = "ON" if self.app_info.auto_return else "OFF"
         yield Static(f"Auto-Return: {auto_return_text}", id="auto-return-info")
-        yield Static(f"Transcript Logging: {self.app_info.transcript_logging}", id="transcript-logging-info")
+        transcript_logging_widget = Static(
+            f"Transcript Logging: {self.app_info.transcript_logging}",
+            id="transcript-logging-info"
+        )
+        if self.app_info.transcript_logging != "OFF":
+            transcript_logging_widget.add_class("enabled")
+        yield transcript_logging_widget
 
         yield Static("", id="spacer-3")
         yield RecordingTimer(id="recording-timer")
@@ -90,12 +96,15 @@ class InfoPanel(Container):
             enabled: Whether transcript logging is enabled
             path: Path to transcripts directory
         """
+        widget = self.query_one("#transcript-logging-info", Static)
         if enabled:
             self.app_info.transcript_logging = path
-            self.query_one("#transcript-logging-info", Static).update(f"Transcript Logging: {path}")
+            widget.update(f"Transcript Logging: {path}")
+            widget.add_class("enabled")
         else:
             self.app_info.transcript_logging = "OFF"
-            self.query_one("#transcript-logging-info", Static).update("Transcript Logging: OFF")
+            widget.update("Transcript Logging: OFF")
+            widget.remove_class("enabled")
 
     def get_timer(self) -> RecordingTimer:
         """Get the recording timer widget.
