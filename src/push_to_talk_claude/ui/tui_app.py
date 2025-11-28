@@ -61,8 +61,10 @@ class PushToTalkTUI(App):
 
     def watch_theme(self, theme: str) -> None:
         """Save theme changes to config file."""
-        # Skip if config not yet initialized
+        # Skip if not yet fully initialized
         if not hasattr(self, 'config') or self.config is None:
+            return
+        if not hasattr(self, 'log_buffer') or self.log_buffer is None:
             return
         if self.config.ui.theme != theme:
             self.config.ui.theme = theme
