@@ -51,16 +51,19 @@ class PushToTalkTUI(App):
             app_controller: Parent App instance for toggle operations
         """
         super().__init__(**kwargs)
-        self.theme = config.ui.theme  # Load theme from config
         self.config = config
         self.session_manager = session_manager
         self.app_controller = app_controller
         self.app_info = AppInfo.from_config(config)
         self.log_buffer = LogBuffer()
         self._log_modal_visible = False
+        self.theme = config.ui.theme  # Load theme from config (after config is set)
 
     def watch_theme(self, theme: str) -> None:
         """Save theme changes to config file."""
+        # Skip if config not yet initialized
+        if not hasattr(self, 'config') or self.config is None:
+            return
         if self.config.ui.theme != theme:
             self.config.ui.theme = theme
             # Save to config file
