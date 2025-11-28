@@ -33,7 +33,7 @@ class InfoPanel(Container):
     def compose(self) -> ComposeResult:
         """Yield widgets for app info display."""
         # Top section: Title and instruction
-        yield Static("🎤 Push-to-Talk Claude", id="title")
+        yield Static("♪ Push-to-Talk Claude", id="title")
         yield Static(self._get_instruction_text(), id="instruction-1")
 
         # Middle section: Timer (centered vertically)

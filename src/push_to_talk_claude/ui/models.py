@@ -23,13 +23,14 @@ class StatusPillConfig:
 
 
 # Default status pill configurations
+# Using single-width Unicode symbols to avoid terminal width calculation issues
 STATUS_PILLS = [
-    StatusPillConfig(RecordingStatus.RECORDING, "Recording", "🔴", "$error"),
-    StatusPillConfig(RecordingStatus.TRANSCRIBING, "Transcribing", "⏳", "$warning"),
-    StatusPillConfig(RecordingStatus.INJECTING, "Injecting", "💉", "$primary"),
-    StatusPillConfig(RecordingStatus.COMPLETE, "Complete", "✅", "$success"),
-    StatusPillConfig(RecordingStatus.ERROR, "Error", "❌", "$error"),
-    StatusPillConfig(RecordingStatus.IDLE, "Skipped", "⏭️", "$surface"),
+    StatusPillConfig(RecordingStatus.RECORDING, "Recording", "●", "$error"),
+    StatusPillConfig(RecordingStatus.TRANSCRIBING, "Transcribing", "◐", "$warning"),
+    StatusPillConfig(RecordingStatus.INJECTING, "Injecting", "▶", "$primary"),
+    StatusPillConfig(RecordingStatus.COMPLETE, "Complete", "✓", "$success"),
+    StatusPillConfig(RecordingStatus.ERROR, "Error", "✗", "$error"),
+    StatusPillConfig(RecordingStatus.IDLE, "Skipped", "»", "$surface"),
 ]
 
 
