@@ -4,22 +4,22 @@ Hands-free voice input for Claude Code on macOS.
 
 ## Features
 
-- **Push-to-Talk Input**: Hold a hotkey to speak, release to send to Claude Code
+- **Push-to-Talk Input**: Hold a hotkey to speak, release to type text into any application
 - **Local Speech Recognition**: Whisper runs entirely on your machine - no data leaves your computer
 - **Fast Transcription**: MPS-accelerated on Apple Silicon (~0.05s per transcription after warmup)
-- **Customizable**: Configure hotkey, Whisper model, and tmux target
+- **Flexible Injection**: Type into focused window (default) or send to specific tmux pane
+- **Customizable**: Configure hotkey, Whisper model, and injection target
 
 ## Quick Start
 
 **TL;DR** for experienced users:
 
 ```bash
-brew install portaudio ffmpeg tmux
+brew install portaudio ffmpeg
 git clone https://github.com/YOUR_USERNAME/push-to-talk-claude.git && cd push-to-talk-claude
 uv sync
-# Terminal 1: tmux new-session -s claude 'claude'
-# Terminal 2: uv run claude-voice
-# Hold Right-Ctrl to talk, release to send. Works from any window!
+uv run claude-voice
+# Hold Right-Ctrl to talk, release to send. Text types into focused window!
 ```
 
 ### Prerequisites
@@ -38,7 +38,8 @@ git clone https://github.com/YOUR_USERNAME/push-to-talk-claude.git
 cd push-to-talk-claude
 
 # Install system dependencies
-brew install portaudio ffmpeg tmux
+brew install portaudio ffmpeg
+# Optional: brew install tmux  (only needed for tmux injection mode)
 
 # Install Python dependencies with uv
 curl -LsSf https://astral.sh/uv/install.sh | sh
@@ -56,50 +57,57 @@ The voice interface needs macOS permissions. Grant these in **System Settings > 
 
 ### Usage
 
-#### Step 1: Start Claude Code in tmux
+#### Simple Setup (Focused Mode - Default)
 
-Open a terminal and run:
-
-```bash
-tmux new-session -s claude 'claude'
-```
-
-#### Step 2: Start the Voice Interface
-
-Open a **second terminal window** (not a tmux pane) and run:
+Just start the voice interface:
 
 ```bash
 uv run claude-voice
 ```
 
-> **Why two terminals?** The voice interface needs to run outside tmux to capture keyboard events globally. It injects text into tmux via `send-keys`.
-
-#### Step 3: Arrange Your Windows
-
-Position both terminals so you can see them simultaneously:
-
-```
-┌─────────────────────────────┬─────────────────────────────┐
-│                             │                             │
-│   Claude Code (tmux)        │   Voice Interface           │
-│                             │                             │
-│   Keep your focus here      │   Shows recording status    │
-│   ◀── your cursor           │   (just glance at it)       │
-│                             │                             │
-└─────────────────────────────┴─────────────────────────────┘
-```
-
-#### Step 4: Talk to Claude
-
-1. **Keep focus on the Claude terminal** - don't click away
-2. **Press and hold** the Right Control key (the hotkey works globally!)
+Then:
+1. **Click into any application** where you want text to appear (Claude Code, VS Code, browser, etc.)
+2. **Press and hold** the Right Control key
 3. **Speak** your question or command
 4. **Release** the key
-5. Your words appear in Claude Code automatically
+5. Your words are typed into the focused window!
 
-> **Key insight**: The hotkey is detected system-wide. You don't need to switch to the voice terminal - just keep it visible for status feedback while you stay focused on Claude.
+> **Key insight**: The hotkey is detected system-wide. Text goes wherever your cursor is.
 
 > **First run note**: The first transcription takes longer (~2-5s) as Whisper downloads and initializes the model. Subsequent transcriptions are fast (~0.05s on Apple Silicon).
+
+#### Advanced Setup (tmux Mode)
+
+If you prefer to always send text to a specific tmux pane (regardless of focus), use tmux mode:
+
+1. Start Claude Code in tmux:
+   ```bash
+   tmux new-session -s claude 'claude'
+   ```
+
+2. Configure tmux mode in `~/.claude-voice/config.yaml`:
+   ```yaml
+   injection:
+     mode: "tmux"
+   tmux:
+     session_name: "claude"
+     auto_detect: true
+   ```
+
+3. Start the voice interface in a separate terminal:
+   ```bash
+   uv run claude-voice
+   ```
+
+4. Position windows side-by-side so you can see both:
+   ```
+   ┌─────────────────────────────┬─────────────────────────────┐
+   │   Claude Code (tmux)        │   Voice Interface           │
+   │   Keep your focus here      │   Shows recording status    │
+   └─────────────────────────────┴─────────────────────────────┘
+   ```
+
+5. Hold the hotkey to speak - text injects into the tmux pane regardless of focus.
 
 ## Configuration
 
@@ -122,9 +130,33 @@ whisper:
   device: "mps"          # Use Apple Silicon GPU (or "cpu" for Intel)
   language: "en"
 
+injection:
+  mode: "focused"        # "focused" = type into active window (default)
+                         # "tmux" = send to specific tmux pane
+
+# Only used when injection.mode is "tmux"
 tmux:
   session_name: null     # Auto-detect Claude session, or set explicitly
+  window_index: null     # Specific window (0-indexed)
+  pane_index: null       # Specific pane (0-indexed)
   auto_detect: true
+```
+
+### Injection Modes
+
+**Focused Mode** (default): Types into whatever window has keyboard focus. Works with any application - Claude Code, VS Code, browsers, Slack, etc.
+
+**tmux Mode**: Sends text to a specific tmux pane. Useful when you want to inject into a background tmux session regardless of focus.
+
+```yaml
+# Example: Always send to a specific tmux pane
+injection:
+  mode: "tmux"
+tmux:
+  session_name: "claude"
+  window_index: 0
+  pane_index: 0
+  auto_detect: false
 ```
 
 ### Available Hotkeys

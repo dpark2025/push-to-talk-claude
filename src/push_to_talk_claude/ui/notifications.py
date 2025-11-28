@@ -42,7 +42,7 @@ class NotificationManager:
         panel = Panel(text, border_style="red", padding=(1, 2), title="[bold red]Action Required[/bold red]")
         self.console.print(panel)
 
-    def startup_banner(self, hotkey: str, model: str) -> None:
+    def startup_banner(self, hotkey: str, model: str, injection_mode: str = "focused") -> None:
         """Show startup banner with configuration info."""
         text = Text()
         text.append("🎙️  Push-to-Talk Claude\n\n", style="bold cyan")
@@ -50,7 +50,10 @@ class NotificationManager:
         text.append(f"  Hotkey: ", style="dim")
         text.append(f"{hotkey}\n", style="bold green")
         text.append(f"  Whisper Model: ", style="dim")
-        text.append(f"{model}\n\n", style="bold green")
+        text.append(f"{model}\n", style="bold green")
+        text.append(f"  Injection Mode: ", style="dim")
+        mode_desc = "focused (active window)" if injection_mode == "focused" else "tmux (target pane)"
+        text.append(f"{mode_desc}\n\n", style="bold green")
         text.append("Press ", style="white")
         text.append(f"{hotkey}", style="bold green")
         text.append(" to start recording\n", style="white")

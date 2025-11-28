@@ -13,6 +13,8 @@ SUPPORTED_HOTKEYS = {
 
 SUPPORTED_WHISPER_MODELS = {"tiny", "base", "small", "medium", "large"}
 
+SUPPORTED_INJECTION_MODES = {"focused", "tmux"}
+
 
 @dataclass
 class PushToTalkConfig:
@@ -27,6 +29,11 @@ class WhisperConfig:
     model: str = "tiny"
     device: str = "auto"
     language: Optional[str] = "en"
+
+
+@dataclass
+class InjectionConfig:
+    mode: str = "focused"  # "focused" (type into active window) or "tmux" (send to tmux pane)
 
 
 @dataclass
@@ -54,12 +61,14 @@ class SecurityConfig:
 class LoggingConfig:
     level: str = "INFO"
     save_transcripts: bool = False
+    transcripts_dir: str = ".tts-transcriptions"  # Relative to cwd or absolute path
 
 
 @dataclass
 class Config:
     push_to_talk: PushToTalkConfig
     whisper: WhisperConfig
+    injection: InjectionConfig
     tmux: TmuxConfig
     tts: TTSConfig
     security: SecurityConfig
@@ -104,6 +113,7 @@ class Config:
         return cls(
             push_to_talk=PushToTalkConfig(**data.get('push_to_talk', {})),
             whisper=WhisperConfig(**data.get('whisper', {})),
+            injection=InjectionConfig(**data.get('injection', {})),
             tmux=TmuxConfig(**data.get('tmux', {})),
             tts=TTSConfig(**data.get('tts', {})),
             security=SecurityConfig(**data.get('security', {})),
@@ -116,6 +126,7 @@ class Config:
         return cls(
             push_to_talk=PushToTalkConfig(),
             whisper=WhisperConfig(),
+            injection=InjectionConfig(),
             tmux=TmuxConfig(),
             tts=TTSConfig(),
             security=SecurityConfig(),
@@ -129,6 +140,7 @@ class Config:
         data = {
             'push_to_talk': asdict(self.push_to_talk),
             'whisper': asdict(self.whisper),
+            'injection': asdict(self.injection),
             'tmux': asdict(self.tmux),
             'tts': asdict(self.tts),
             'security': asdict(self.security),
@@ -152,6 +164,12 @@ class Config:
             errors.append(
                 f"Invalid whisper model '{self.whisper.model}'. "
                 f"Supported models: {', '.join(sorted(SUPPORTED_WHISPER_MODELS))}"
+            )
+
+        if self.injection.mode not in SUPPORTED_INJECTION_MODES:
+            errors.append(
+                f"Invalid injection mode '{self.injection.mode}'. "
+                f"Supported modes: {', '.join(sorted(SUPPORTED_INJECTION_MODES))}"
             )
 
         if not (100 <= self.tts.rate <= 400):

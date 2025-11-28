@@ -48,3 +48,4 @@ Thumbs.db
 
 # Project specific
 test_*.py
+.tts-transcriptions/

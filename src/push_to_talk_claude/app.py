@@ -1,6 +1,8 @@
 """Main application orchestrator for push-to-talk voice interface."""
 
 from typing import Optional
+from pathlib import Path
+from datetime import datetime
 import signal
 import sys
 import logging
@@ -9,6 +11,7 @@ from .core.keyboard_monitor import KeyboardMonitor
 from .core.audio_capture import AudioCapture
 from .core.speech_to_text import SpeechToText
 from .core.tmux_injector import TmuxInjector
+from .core.focused_injector import FocusedInjector
 from .core.recording_session import RecordingSessionManager, RecordingStatus
 from .utils.config import Config
 from .utils.sanitizer import InputSanitizer
@@ -55,7 +58,7 @@ class App:
         self.keyboard_monitor: Optional[KeyboardMonitor] = None
         self.audio_capture: Optional[AudioCapture] = None
         self.speech_to_text: Optional[SpeechToText] = None
-        self.tmux_injector: Optional[TmuxInjector] = None
+        self.injector = None  # FocusedInjector or TmuxInjector based on config
         self.session_manager: Optional[RecordingSessionManager] = None
 
     def _initialize_components(self) -> None:
@@ -70,33 +73,38 @@ class App:
             language=self.config.whisper.language
         )
 
-        # Setup tmux injector based on config
-        if self.config.tmux.session_name and not self.config.tmux.auto_detect:
-            # Use explicit config
-            self.tmux_injector = TmuxInjector(
-                session_name=self.config.tmux.session_name,
-                window_index=self.config.tmux.window_index,
-                pane_index=self.config.tmux.pane_index,
-                auto_detect=False
-            )
+        # Setup injector based on config
+        if self.config.injection.mode == "focused":
+            # Type into whatever window has focus
+            self.injector = FocusedInjector()
         else:
-            # Auto-detect Claude session
-            claude_session = self.session_detector.get_best_target()
-            if claude_session:
-                self.tmux_injector = TmuxInjector(
-                    session_name=claude_session.session_name,
-                    window_index=claude_session.window_index,
-                    pane_index=claude_session.pane_index,
+            # Use tmux injection
+            if self.config.tmux.session_name and not self.config.tmux.auto_detect:
+                # Use explicit config
+                self.injector = TmuxInjector(
+                    session_name=self.config.tmux.session_name,
+                    window_index=self.config.tmux.window_index,
+                    pane_index=self.config.tmux.pane_index,
                     auto_detect=False
                 )
             else:
-                self.tmux_injector = TmuxInjector(auto_detect=True)
+                # Auto-detect Claude session
+                claude_session = self.session_detector.get_best_target()
+                if claude_session:
+                    self.injector = TmuxInjector(
+                        session_name=claude_session.session_name,
+                        window_index=claude_session.window_index,
+                        pane_index=claude_session.pane_index,
+                        auto_detect=False
+                    )
+                else:
+                    self.injector = TmuxInjector(auto_detect=True)
 
         # Recording session manager
         self.session_manager = RecordingSessionManager(
             audio_capture=self.audio_capture,
             speech_to_text=self.speech_to_text,
-            tmux_injector=self.tmux_injector,
+            tmux_injector=self.injector,  # Works with either FocusedInjector or TmuxInjector
             sanitizer=self.sanitizer,
             on_state_change=self._on_state_change,
             on_transcription=self._on_transcription,
@@ -132,26 +140,30 @@ class App:
             self.notifications.permission_error("Accessibility")
             return False
 
-        # Check tmux available
-        if not TmuxInjector.is_tmux_available():
-            logger.error("tmux not available")
-            self.notifications.error("tmux is required but not installed. Run: brew install tmux")
-            return False
+        # Check tmux requirements only if using tmux injection mode
+        if self.config.injection.mode == "tmux":
+            # Check tmux available
+            if not TmuxInjector.is_tmux_available():
+                logger.error("tmux not available")
+                self.notifications.error("tmux is required but not installed. Run: brew install tmux")
+                return False
 
-        # Check for Claude session
-        if not self.session_detector.is_tmux_running():
-            logger.warning("tmux server not running")
-            self.notifications.warning("tmux server not running. Start with: tmux new-session -s claude 'claude'")
-            return False
+            # Check for Claude session
+            if not self.session_detector.is_tmux_running():
+                logger.warning("tmux server not running")
+                self.notifications.warning("tmux server not running. Start with: tmux new-session -s claude 'claude'")
+                return False
 
-        claude_session = self.session_detector.get_best_target()
-        if not claude_session:
-            logger.warning("No Claude session found")
-            self.notifications.warning("No Claude Code session found. Start with: tmux new-session -s claude 'claude'")
-            return False
+            claude_session = self.session_detector.get_best_target()
+            if not claude_session:
+                logger.warning("No Claude session found")
+                self.notifications.warning("No Claude Code session found. Start with: tmux new-session -s claude 'claude'")
+                return False
 
-        logger.info(f"Found Claude session: {claude_session.target_string}")
-        self.notifications.success(f"Found Claude session: {claude_session.target_string}")
+            logger.info(f"Found Claude session: {claude_session.target_string}")
+            self.notifications.success(f"Found Claude session: {claude_session.target_string}")
+        else:
+            logger.info("Using focused injection mode (typing into active window)")
 
         logger.info("All prerequisites met")
         return True
@@ -178,7 +190,8 @@ class App:
         # Show startup banner
         self.notifications.startup_banner(
             hotkey=self.config.push_to_talk.hotkey,
-            model=self.config.whisper.model
+            model=self.config.whisper.model,
+            injection_mode=self.config.injection.mode
         )
 
     def stop(self) -> None:
@@ -289,6 +302,28 @@ class App:
         if text and text.strip():
             self.indicator.show_complete(text)
             logger.info(f"Transcription: {text[:50]}...")
+
+            # Save transcript if enabled
+            if self.config.logging.save_transcripts:
+                self._save_transcript(text)
+
+    def _save_transcript(self, text: str) -> None:
+        """Save transcription to file."""
+        try:
+            import time
+            transcripts_dir = Path(self.config.logging.transcripts_dir)
+            transcripts_dir.mkdir(parents=True, exist_ok=True)
+
+            epoch_ms = int(time.time() * 1000)
+            filename = transcripts_dir / f"transcript_{epoch_ms}.txt"
+
+            with open(filename, 'w') as f:
+                f.write(f"Timestamp: {epoch_ms}\n")
+                f.write(f"Text: {text}\n")
+
+            logger.debug(f"Transcript saved to {filename}")
+        except Exception as e:
+            logger.warning(f"Failed to save transcript: {e}")
 
     def _on_error(self, error: str) -> None:
         """Handle errors."""

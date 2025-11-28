@@ -27,7 +27,13 @@ whisper:
   # Language code (e.g., "en", "es", "fr") or null for auto-detect
   language: "en"
 
-# tmux integration settings
+# Text injection settings
+injection:
+  # Mode: "focused" types into whatever window has focus (default)
+  #       "tmux" sends to a specific tmux pane (configure below)
+  mode: "focused"
+
+# tmux integration settings (only used when injection.mode is "tmux")
 tmux:
   # Explicit session name, or null for auto-detect
   session_name: null
@@ -65,5 +71,8 @@ logging:
   # Log level: DEBUG, INFO, WARNING, ERROR
   level: "INFO"
 
-  # Save transcriptions to log file
+  # Save transcriptions to file
   save_transcripts: false
+
+  # Directory for saved transcriptions (relative to cwd or absolute)
+  transcripts_dir: ".tts-transcriptions"
