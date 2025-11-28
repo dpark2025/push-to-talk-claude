@@ -4,18 +4,20 @@ import re
 
 
 class InputSanitizer:
-    """Sanitize user input before tmux injection."""
+    """Sanitize user input before injection."""
 
-    # Characters that must be escaped
+    # Characters that must be escaped for shell/tmux
     SHELL_METACHARACTERS: str = "$`\\\"'|&;><(){}[]!*?~#"
 
-    def __init__(self, max_length: int = 500) -> None:
+    def __init__(self, max_length: int = 500, escape_shell: bool = True) -> None:
         """Initialize sanitizer with max length.
 
         Args:
             max_length: Maximum allowed length of sanitized text.
+            escape_shell: Whether to escape shell metacharacters (True for tmux, False for focused mode).
         """
         self.max_length = max_length
+        self.escape_shell = escape_shell
         self._ansi_pattern = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]')
 
     def sanitize(self, text: str) -> str:
@@ -44,9 +46,10 @@ class InputSanitizer:
         # Step 2: Replace newlines with spaces
         result = result.replace('\n', ' ').replace('\r', ' ')
 
-        # Step 3: Escape shell metacharacters
-        for char in self.SHELL_METACHARACTERS:
-            result = result.replace(char, f'\\{char}')
+        # Step 3: Escape shell metacharacters (only for tmux mode)
+        if self.escape_shell:
+            for char in self.SHELL_METACHARACTERS:
+                result = result.replace(char, f'\\{char}')
 
         # Step 4: Truncate to max_length
         result = result[:self.max_length]

@@ -47,8 +47,8 @@ class App:
                 logger.error(f"Config error: {error}")
             raise ValueError(f"Invalid configuration: {errors[0]}")
 
-        # Utilities
-        self.sanitizer = InputSanitizer(self.config.security.max_input_length)
+        # Utilities - no shell escaping needed (tmux send-keys handles it, focused mode types directly)
+        self.sanitizer = InputSanitizer(self.config.security.max_input_length, escape_shell=False)
         self.session_detector = SessionDetector()
 
         # UI components
@@ -133,6 +133,34 @@ class App:
                 session_manager=self.session_manager
             )
 
+    def _preload_whisper_model(self) -> None:
+        """Preload Whisper model to avoid slow first transcription."""
+        model_name = self.config.whisper.model
+        logger.info(f"Preloading Whisper model '{model_name}'...")
+
+        # Log to TUI buffer if available (will show when TUI starts)
+        if self.tui:
+            self.tui.show_model_loading()
+
+        # Show console message for non-TUI mode
+        if not self._use_tui:
+            self.notifications.info(f"Loading Whisper model '{model_name}' (first run may download)...")
+
+        success, message = self.speech_to_text.preload_model()
+
+        if success:
+            logger.info(message)
+            if self.tui:
+                self.tui.show_model_loaded(message)
+            if not self._use_tui:
+                self.notifications.success(message)
+        else:
+            logger.warning(f"Model preload failed: {message}")
+            if self.tui:
+                self.tui.show_model_error(message)
+            if not self._use_tui:
+                self.notifications.warning(f"Model preload failed: {message} (will retry on first use)")
+
     def check_prerequisites(self) -> bool:
         """
         Check all prerequisites before starting.
@@ -194,6 +222,9 @@ class App:
 
         # Initialize components
         self._initialize_components()
+
+        # Preload Whisper model (downloads if needed, caches for fast first transcription)
+        self._preload_whisper_model()
 
         # Setup signal handlers
         self._setup_signal_handlers()

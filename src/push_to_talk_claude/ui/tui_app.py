@@ -7,6 +7,7 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal
 from textual.widgets import Footer
+from textual.worker import Worker, get_current_worker
 
 from push_to_talk_claude.core.recording_session import RecordingStatus
 from push_to_talk_claude.ui.models import AppInfo, LogBuffer
@@ -17,6 +18,7 @@ from push_to_talk_claude.ui.widgets.log_modal import LogModal
 if TYPE_CHECKING:
     from push_to_talk_claude.utils.config import Config
     from push_to_talk_claude.core.recording_session import RecordingSessionManager
+    from push_to_talk_claude.core.speech_to_text import SpeechToText
 
 
 class PushToTalkTUI(App):
@@ -177,3 +179,16 @@ class PushToTalkTUI(App):
         info_panel = self.query_one(InfoPanel)
         timer = info_panel.get_timer()
         timer.reset()
+
+    def show_model_loading(self) -> None:
+        """Show that the model is loading."""
+        self.log_buffer.append("INFO", "Loading Whisper model (first run may download ~244MB)...")
+
+    def show_model_loaded(self, message: str) -> None:
+        """Show that the model loaded successfully."""
+        self.log_buffer.append("INFO", message)
+
+    def show_model_error(self, error: str) -> None:
+        """Show model loading error."""
+        self.log_buffer.append("ERROR", f"Model loading failed: {error}")
+        self.notify(f"⚠️ Model error: {error}", severity="error", timeout=10)

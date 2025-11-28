@@ -75,7 +75,7 @@ Then:
 
 > **Key insight**: The hotkey is detected system-wide. Text goes wherever your cursor is.
 
-> **First run note**: The first transcription takes longer (~2-5s) as Whisper downloads and initializes the model. Subsequent transcriptions are fast (~0.05s on Apple Silicon).
+> **First run note**: The first transcription takes longer (~5-10s) as Whisper downloads the `small` model (~244MB) and initializes. Subsequent transcriptions are fast on Apple Silicon.
 
 #### Advanced Setup (tmux Mode)
 
@@ -145,7 +145,7 @@ push_to_talk:
   audio_feedback: true
 
 whisper:
-  model: "tiny"          # Options: tiny, base, small, medium, large
+  model: "small"         # Options: tiny, base, small, medium, large
   device: "mps"          # Use Apple Silicon GPU (or "cpu" for Intel)
   language: "en"
 
@@ -195,7 +195,7 @@ tmux:
 | medium | 769MB  | Slow    | Excellent |
 | large  | 1.5GB  | Slowest | Best      |
 
-For most use cases, `tiny` with MPS acceleration provides excellent speed and accuracy.
+The default `small` model provides great accuracy. Use `tiny` for faster transcription if accuracy is less important.
 
 ## CLI Reference
 
@@ -248,7 +248,7 @@ tmux new-session -s claude 'claude'  # Create new session
    whisper:
      device: "mps"
    ```
-2. Use the `tiny` model for fastest transcription
+2. Use a smaller model (`tiny` or `base`) for faster transcription
 3. First transcription is slower (model warmup), subsequent ones are fast
 
 ### "Target session/pane is no longer valid"

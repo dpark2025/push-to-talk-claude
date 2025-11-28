@@ -96,7 +96,7 @@ class SpeechToText:
 
     def __init__(
         self,
-        model_name: str = "tiny",
+        model_name: str = "small",
         device: str = "auto",
         language: Optional[str] = "en"
     ) -> None:
@@ -131,6 +131,54 @@ class SpeechToText:
         if device == "mps":
             return "cpu"  # MPS doesn't work well across processes
         return device
+
+    def preload_model(self, timeout_seconds: float = 60.0) -> tuple[bool, str]:
+        """Pre-load/download the Whisper model.
+
+        Runs a subprocess to download and cache the model so first transcription is fast.
+
+        Args:
+            timeout_seconds: Maximum time to wait for model loading
+
+        Returns:
+            Tuple of (success: bool, message: str)
+        """
+        import subprocess
+
+        script = f'''
+import os
+os.environ["OMP_NUM_THREADS"] = "1"
+os.environ["MKL_NUM_THREADS"] = "1"
+
+import warnings
+warnings.filterwarnings("ignore")
+
+import torch
+torch.set_num_threads(1)
+
+import whisper
+model = whisper.load_model("{self._model_name}", device="{self._device}")
+print("Model loaded successfully")
+'''
+
+        try:
+            proc = subprocess.run(
+                ["python", "-c", script],
+                capture_output=True,
+                timeout=timeout_seconds,
+                text=True
+            )
+
+            if proc.returncode == 0:
+                return True, f"Model '{self._model_name}' loaded"
+            else:
+                error = proc.stderr.strip() if proc.stderr else "Unknown error"
+                return False, f"Failed to load model: {error}"
+
+        except subprocess.TimeoutExpired:
+            return False, f"Model loading timed out after {timeout_seconds}s"
+        except Exception as e:
+            return False, f"Model loading error: {e}"
 
     def _load_model(self) -> None:
         """Pre-load model to warm up (optional, for API compatibility)."""

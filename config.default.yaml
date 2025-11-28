@@ -18,8 +18,8 @@ push_to_talk:
 
 # Whisper speech-to-text settings
 whisper:
-  # Model size: tiny (fastest), base, small, medium, large (most accurate)
-  model: "tiny"
+  # Model size: tiny (fastest), base, small (default), medium, large (most accurate)
+  model: "small"
 
   # Compute device: auto, cpu, mps (Apple Silicon), cuda
   device: "auto"

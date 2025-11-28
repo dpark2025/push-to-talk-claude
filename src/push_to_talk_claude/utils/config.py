@@ -26,7 +26,7 @@ class PushToTalkConfig:
 
 @dataclass
 class WhisperConfig:
-    model: str = "tiny"
+    model: str = "small"
     device: str = "auto"
     language: Optional[str] = "en"
 

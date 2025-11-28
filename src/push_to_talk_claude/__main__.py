@@ -1,27 +1,8 @@
 """CLI entry point for push-to-talk voice interface."""
 
-# CRITICAL: Set these BEFORE any imports to prevent PyTorch subprocess conflicts
-# with Textual TUI. The fds_to_keep error occurs when PyTorch tries to fork
-# while Textual has terminal file descriptors open.
-import os
-os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
-os.environ.setdefault("OMP_NUM_THREADS", "1")
-os.environ.setdefault("MKL_NUM_THREADS", "1")
-os.environ.setdefault("OPENBLAS_NUM_THREADS", "1")
-os.environ.setdefault("VECLIB_MAXIMUM_THREADS", "1")
-os.environ.setdefault("NUMEXPR_NUM_THREADS", "1")
-# Disable MPS (Apple Metal) to avoid subprocess issues - force CPU
-os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
-# Disable torch compile which may spawn processes
-os.environ.setdefault("TORCH_COMPILE_DISABLE", "1")
-
 import argparse
 import sys
-import warnings
 from pathlib import Path
-
-# Suppress multiprocessing resource tracker warnings on exit
-warnings.filterwarnings("ignore", message="resource_tracker:")
 
 
 def main() -> int:
