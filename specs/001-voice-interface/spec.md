@@ -2,7 +2,8 @@
 
 **Feature Branch**: `001-voice-interface`
 **Created**: 2025-11-27
-**Status**: Draft
+**Completed**: 2025-11-28
+**Status**: Completed
 **Input**: User description: "Build a push-to-talk voice interface for Claude Code on macOS. Core features: (1) Configurable hotkey triggers audio recording, (2) Local speech-to-text transcribes speech, (3) Transcribed text injected into Claude Code via tmux, (4) Claude Code hooks trigger response handling, (5) Response parser filters code blocks and command output, (6) macOS system TTS speaks only conversational responses. Privacy-first: all processing local by default. Target: <3s voice-to-text latency, <5 min setup time."
 
 ## User Scenarios & Testing *(mandatory)*
