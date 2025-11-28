@@ -3,19 +3,29 @@
 ## "Push" Command Convention
 
 When user says **"push"**, it means:
-1. **Commit** all work with descriptive message
-2. **Push** to remote repository
-3. **Create PR** using `gh pr create` with full summary
+1. **Create a feature branch** (if not already on one)
+2. **Commit** all work with descriptive message
+3. **Push** to remote repository
+4. **Create PR** using `gh pr create` with full summary
+5. **Wait for user approval** before merging
 
-Always include a comprehensive PR description summarizing:
-- What was implemented/fixed
-- Key changes made
-- Any configuration or usage notes
+**IMPORTANT**: Never push directly to main. Always create a pull request.
+
+### PR Merge Rules:
+- **User says "merge"** → Merge the PR using `gh pr merge --merge`
+- **User says nothing about merge** → Leave PR open for review
+- **Always return the PR URL** so user can review
 
 ```bash
 # Full "push" workflow:
+# 1. Create branch if on main
+git checkout -b <feature-branch> 2>/dev/null || git checkout <feature-branch>
+
+# 2. Commit and push
 git add -A && git commit -m "feat/fix: <description>"
-git push origin <branch-name>
+git push -u origin <feature-branch>
+
+# 3. Create PR
 gh pr create --title "<type>: <title>" --body "$(cat <<'EOF'
 ## Summary
 <bullet points of what was done>
@@ -32,6 +42,9 @@ gh pr create --title "<type>: <title>" --body "$(cat <<'EOF'
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 EOF
 )"
+
+# 4. Return PR URL and wait for user
+# If user says "merge" → gh pr merge --merge
 ```
 
 ## Feature Branch Lifecycle
