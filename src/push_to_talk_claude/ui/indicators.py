@@ -42,6 +42,16 @@ class RecordingIndicator:
             panel = Panel(text, border_style="blue", padding=(0, 1))
             self.console.print(panel)
 
+    def show_skipped(self, reason: str) -> None:
+        """Show skipped message (too short, no speech, etc.)."""
+        with self._lock:
+            text = Text()
+            text.append("⏭️ ", style="bold dim")
+            text.append("[Skipped] ", style="bold dim")
+            text.append(reason, style="dim")
+            panel = Panel(text, border_style="dim", padding=(0, 1))
+            self.console.print(panel)
+
     def show_complete(self, text: str) -> None:
         """Show completion with transcribed text preview."""
         with self._lock:

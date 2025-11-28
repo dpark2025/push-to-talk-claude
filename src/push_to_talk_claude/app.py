@@ -108,7 +108,8 @@ class App:
             sanitizer=self.sanitizer,
             on_state_change=self._on_state_change,
             on_transcription=self._on_transcription,
-            on_error=self._on_error
+            on_error=self._on_error,
+            on_skipped=self._on_skipped
         )
 
         # Keyboard monitor
@@ -331,6 +332,11 @@ class App:
         self.audio_feedback.play_error()
         self.notifications.error(error)
         self.indicator.show_error(error)
+
+    def _on_skipped(self, reason: str) -> None:
+        """Handle skipped recordings (too short, no speech, etc.)."""
+        logger.debug(f"Recording skipped: {reason}")
+        self.indicator.show_skipped(reason)
 
     def _setup_signal_handlers(self) -> None:
         """Setup SIGINT/SIGTERM handlers for graceful shutdown."""
