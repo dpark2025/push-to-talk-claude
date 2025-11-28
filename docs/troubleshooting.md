@@ -193,7 +193,7 @@ logging:
 ## Getting Help
 
 If you're still stuck:
-1. Check existing issues: https://github.com/yourusername/push-to-talk-claude/issues
+1. Check existing issues: https://github.com/dpark2025/push-to-talk-claude/issues
 2. Open a new issue with:
    - Your macOS version
    - Output of `uv run claude-voice --check`
