@@ -46,7 +46,7 @@ class RecordingIndicator:
         """Show skipped message (too short, no speech, etc.)."""
         with self._lock:
             text = Text()
-            text.append("⏭️ ", style="bold dim")
+            text.append(">> ", style="bold dim")
             text.append("[Skipped] ", style="bold dim")
             text.append(reason, style="dim")
             panel = Panel(text, border_style="dim", padding=(0, 1))
