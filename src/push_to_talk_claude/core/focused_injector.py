@@ -1,6 +1,6 @@
 """Focused window injector - types text into whatever window has focus."""
 
-from pynput.keyboard import Controller
+from pynput.keyboard import Controller, Key
 import time
 
 
@@ -40,6 +40,19 @@ class FocusedInjector:
                     time.sleep(self._typing_delay)
             else:
                 self._keyboard.type(text)
+            return True
+        except Exception:
+            return False
+
+    def send_enter(self) -> bool:
+        """
+        Send Enter keystroke to the focused window.
+
+        Returns:
+            True if keystroke succeeded
+        """
+        try:
+            self._keyboard.tap(Key.enter)
             return True
         except Exception:
             return False

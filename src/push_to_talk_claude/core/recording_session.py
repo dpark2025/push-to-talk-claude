@@ -66,6 +66,7 @@ class RecordingSessionManager:
         self._session: Optional[RecordingSession] = None
         self._lock = threading.Lock()
         self._max_duration_timer: Optional[threading.Timer] = None
+        self._auto_return: bool = False
 
     @property
     def current_session(self) -> Optional[RecordingSession]:
@@ -80,6 +81,16 @@ class RecordingSessionManager:
             if self._session is None:
                 return RecordingStatus.IDLE
             return self._session.status
+
+    @property
+    def auto_return(self) -> bool:
+        """Get auto_return setting."""
+        return self._auto_return
+
+    @auto_return.setter
+    def auto_return(self, value: bool) -> None:
+        """Set auto_return setting."""
+        self._auto_return = value
 
     def start_recording(self) -> None:
         """Start a new recording session. Called when hotkey pressed."""
@@ -224,6 +235,10 @@ class RecordingSessionManager:
             self._notify_state_change(RecordingStatus.INJECTING)
 
             self._tmux_injector.inject_text(sanitized)
+
+            # Send Enter keystroke if auto_return enabled and text was injected
+            if self._auto_return and sanitized:
+                self._tmux_injector.send_enter()
 
             with self._lock:
                 if self._session:

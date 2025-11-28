@@ -160,6 +160,35 @@ InfoPanel {
     padding: 0 1;
 }
 
+/* ============================================
+   Startup Config Box Styles
+   ============================================ */
+
+StartupConfigBox {
+    border: round #00ff00;
+    padding: 0 1;
+    margin: 0 0 1 0;
+    height: auto;
+}
+
+#startup-config-label {
+    color: #00ff00;
+    text-style: bold;
+    padding: 0 0;
+    margin-bottom: 0;
+}
+
+#transcript-logging-info {
+    color: #888888;
+    padding: 0 1;
+}
+
+#auto-return-info {
+    color: #ffaa00;
+    text-style: bold;
+    padding: 0 1;
+}
+
 #divider {
     color: #00ff00;
     margin: 1 0;

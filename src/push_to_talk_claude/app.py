@@ -119,6 +119,9 @@ class App:
             on_skipped=self._on_skipped
         )
 
+        # Initialize auto_return from config
+        self.session_manager.auto_return = self.config.injection.auto_return
+
         # Keyboard monitor
         self.keyboard_monitor = KeyboardMonitor(
             hotkey=self.config.push_to_talk.hotkey,
@@ -130,7 +133,8 @@ class App:
         if self._use_tui:
             self.tui = PushToTalkTUI(
                 config=self.config,
-                session_manager=self.session_manager
+                session_manager=self.session_manager,
+                app_controller=self
             )
 
     def _preload_whisper_model(self) -> None:
@@ -409,6 +413,17 @@ class App:
             self.tui.handle_skipped(reason)
         else:
             self.indicator.show_skipped(reason)
+
+    def toggle_auto_return(self) -> bool:
+        """Toggle auto_return setting on session_manager.
+
+        Returns:
+            New auto_return value
+        """
+        if self.session_manager:
+            self.session_manager.auto_return = not self.session_manager.auto_return
+            return self.session_manager.auto_return
+        return False
 
     def _setup_signal_handlers(self) -> None:
         """Setup SIGINT/SIGTERM handlers for graceful shutdown."""

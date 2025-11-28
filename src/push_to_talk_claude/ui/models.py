@@ -80,6 +80,8 @@ class AppInfo:
     whisper_model: str
     injection_mode: str
     target_info: str
+    auto_return: bool
+    transcript_logging: str
 
     @classmethod
     def from_config(cls, config: "Config") -> "AppInfo":
@@ -89,11 +91,18 @@ class AppInfo:
         else:
             target = f"{config.tmux.session_name}:{config.tmux.window_index}.{config.tmux.pane_index}"
 
+        if config.logging.save_transcripts:
+            transcript_logging = config.logging.transcripts_dir
+        else:
+            transcript_logging = "DISABLED"
+
         return cls(
             hotkey=config.push_to_talk.hotkey,
             whisper_model=config.whisper.model,
             injection_mode=config.injection.mode,
             target_info=target,
+            auto_return=config.injection.auto_return,
+            transcript_logging=transcript_logging,
         )
 
 

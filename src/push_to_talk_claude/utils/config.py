@@ -34,6 +34,7 @@ class WhisperConfig:
 @dataclass
 class InjectionConfig:
     mode: str = "focused"  # "focused" (type into active window) or "tmux" (send to tmux pane)
+    auto_return: bool = False  # Automatically press Enter after injecting text
 
 
 @dataclass

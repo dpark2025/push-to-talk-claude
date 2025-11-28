@@ -8,6 +8,11 @@ from push_to_talk_claude.ui.models import AppInfo
 from push_to_talk_claude.ui.widgets.recording_timer import RecordingTimer
 
 
+class StartupConfigBox(Container):
+    """Bordered container for startup configuration items."""
+    pass
+
+
 class InfoPanel(Container):
     """Left panel displaying app configuration and instructions."""
 
@@ -24,13 +29,25 @@ class InfoPanel(Container):
         """Yield widgets for app info display."""
         yield Static("🎤 Push-to-Talk Claude", id="title")
         yield Static("", id="spacer-1")
-        yield Static(f"Hotkey: {self.app_info.hotkey}", id="hotkey-info")
-        yield Static(f"Model: {self.app_info.whisper_model}", id="model-info")
-        yield Static(f"Mode: {self.app_info.injection_mode}", id="mode-info")
-        yield Static(f"Target: {self.app_info.target_info}", id="target-info")
+
+        # Startup Configuration box
+        with StartupConfigBox(id="startup-config-box"):
+            yield Static("─ Startup Configuration ─", id="startup-config-label")
+            yield Static(f"Hotkey: {self.app_info.hotkey}", id="hotkey-info")
+            yield Static(f"Model: {self.app_info.whisper_model}", id="model-info")
+            yield Static(f"Mode: {self.app_info.injection_mode}", id="mode-info")
+            yield Static(f"Target: {self.app_info.target_info}", id="target-info")
+            yield Static(f"Transcript Logging: {self.app_info.transcript_logging}", id="transcript-logging-info")
+
         yield Static("", id="spacer-2")
-        yield RecordingTimer(id="recording-timer")
+
+        # Runtime-toggleable options (outside the startup config box)
+        auto_return_text = "ON" if self.app_info.auto_return else "OFF"
+        yield Static(f"Auto-Return: {auto_return_text}", id="auto-return-info")
+
         yield Static("", id="spacer-3")
+        yield RecordingTimer(id="recording-timer")
+        yield Static("", id="spacer-4")
         yield Static("─" * 20, id="divider")
         yield Static(self._get_instruction_text(), id="instruction-1")
 
@@ -53,6 +70,18 @@ class InfoPanel(Container):
         self.query_one("#mode-info", Static).update(f"Mode: {app_info.injection_mode}")
         self.query_one("#target-info", Static).update(f"Target: {app_info.target_info}")
         self.query_one("#instruction-1", Static).update(self._get_instruction_text())
+        auto_return_text = "ON" if app_info.auto_return else "OFF"
+        self.query_one("#auto-return-info", Static).update(f"Auto-Return: {auto_return_text}")
+
+    def update_auto_return(self, enabled: bool) -> None:
+        """Update the auto-return indicator.
+
+        Args:
+            enabled: Whether auto-return is enabled
+        """
+        self.app_info.auto_return = enabled
+        auto_return_text = "ON" if enabled else "OFF"
+        self.query_one("#auto-return-info", Static).update(f"Auto-Return: {auto_return_text}")
 
     def get_timer(self) -> RecordingTimer:
         """Get the recording timer widget.
