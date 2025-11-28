@@ -1,0 +1,69 @@
+# Push-to-Talk Voice Interface Configuration
+# Copy to ~/.claude-voice/config.yaml to customize
+
+# Push-to-talk hotkey settings
+push_to_talk:
+  # Hotkey to trigger recording
+  # Options: ctrl_r, ctrl_l, alt_r, alt_l, cmd_r, cmd_l, f13-f20
+  hotkey: "ctrl_r"
+
+  # Show visual indicator when recording
+  visual_feedback: true
+
+  # Play beep sound on start/stop
+  audio_feedback: true
+
+  # Auto-stop after N seconds of silence (0 to disable)
+  silence_timeout: 2.0
+
+# Whisper speech-to-text settings
+whisper:
+  # Model size: tiny (fastest), base, small, medium, large (most accurate)
+  model: "tiny"
+
+  # Compute device: auto, cpu, mps (Apple Silicon), cuda
+  device: "auto"
+
+  # Language code (e.g., "en", "es", "fr") or null for auto-detect
+  language: "en"
+
+# tmux integration settings
+tmux:
+  # Explicit session name, or null for auto-detect
+  session_name: null
+
+  # Specific window index, or null for current
+  window_index: null
+
+  # Specific pane index, or null for current
+  pane_index: null
+
+  # Auto-detect Claude Code session
+  auto_detect: true
+
+# Text-to-speech settings
+tts:
+  # Enable TTS for Claude responses
+  enabled: true
+
+  # macOS voice name (e.g., "Samantha", "Alex") or null for system default
+  voice: null
+
+  # Speaking rate in words per minute (100-400)
+  rate: 200
+
+  # Maximum characters to speak (longer responses truncated)
+  max_length: 500
+
+# Security settings
+security:
+  # Maximum transcription length (100-5000 characters)
+  max_input_length: 500
+
+# Logging settings
+logging:
+  # Log level: DEBUG, INFO, WARNING, ERROR
+  level: "INFO"
+
+  # Save transcriptions to log file
+  save_transcripts: false

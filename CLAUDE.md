@@ -1,4 +1,6 @@
-- Remeber to refer to the /github/spec-kit from context7 for documentation about spec-kit and how to use it
+- Refer to /github/spec-kit from context7 for spec-kit documentation
+- **CRITICAL**: Follow `.specify/memory/workflow.md` Verification Protocol before claiming implementation complete
+- Subagents MUST read existing files before writing dependent code (never assume interfaces)
 
 ## Active Technologies
 - Python 3.9+ (targeting 3.11 for performance) + pynput (keyboard), PyAudio (audio capture), openai-whisper (STT), subprocess (tmux/say) (001-voice-interface)
