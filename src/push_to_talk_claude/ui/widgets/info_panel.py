@@ -13,6 +13,11 @@ class StartupConfigBox(Container):
     pass
 
 
+class RuntimeOptionsBox(Container):
+    """Container for runtime-toggleable options."""
+    pass
+
+
 class InfoPanel(Container):
     """Left panel displaying app configuration and instructions."""
 
@@ -34,16 +39,17 @@ class InfoPanel(Container):
         # Middle section: Timer (centered vertically)
         yield Container(RecordingTimer(id="recording-timer"), id="timer-container")
 
-        # Runtime-toggleable options
-        auto_return_text = "ON" if self.app_info.auto_return else "OFF"
-        yield Static(f"Auto-Return: {auto_return_text}", id="auto-return-info")
-        transcript_logging_widget = Static(
-            f"Transcript Logging: {self.app_info.transcript_logging}",
-            id="transcript-logging-info"
-        )
-        if self.app_info.transcript_logging != "OFF":
-            transcript_logging_widget.add_class("enabled")
-        yield transcript_logging_widget
+        # Runtime-toggleable options (above startup config box)
+        with RuntimeOptionsBox(id="runtime-options-box"):
+            auto_return_text = "ON" if self.app_info.auto_return else "OFF"
+            yield Static(f"Auto-Return: {auto_return_text}", id="auto-return-info")
+            transcript_logging_widget = Static(
+                f"Transcript Logging: {self.app_info.transcript_logging}",
+                id="transcript-logging-info"
+            )
+            if self.app_info.transcript_logging != "OFF":
+                transcript_logging_widget.add_class("enabled")
+            yield transcript_logging_widget
 
         # Bottom section: Startup Configuration box
         with StartupConfigBox(id="startup-config-box"):

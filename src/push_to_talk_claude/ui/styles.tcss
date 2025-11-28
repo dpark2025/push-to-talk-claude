@@ -184,10 +184,15 @@ StartupConfigBox {
     margin-bottom: 0;
 }
 
+RuntimeOptionsBox {
+    height: auto;
+    dock: bottom;
+    padding: 0 0 1 0;
+}
+
 #transcript-logging-info {
     color: #666666;
     padding: 0 1;
-    dock: bottom;
 }
 
 #transcript-logging-info.enabled {
@@ -199,7 +204,6 @@ StartupConfigBox {
     color: #ffaa00;
     text-style: bold;
     padding: 0 1;
-    dock: bottom;
 }
 
 #instruction-1 {
