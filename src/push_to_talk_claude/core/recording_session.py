@@ -7,6 +7,7 @@ from datetime import datetime
 import uuid
 import threading
 import time
+import numpy as np
 
 
 class RecordingStatus(Enum):
@@ -38,6 +39,8 @@ class RecordingSessionManager:
 
     MAX_RECORDING_DURATION = 60.0  # seconds
     TRANSCRIPTION_TIMEOUT = 30.0  # seconds (needs time for model init on first run)
+    MIN_RECORDING_DURATION = 0.3  # seconds - skip if shorter (accidental press)
+    MIN_AUDIO_RMS = 0.01  # minimum RMS threshold - skip if quieter (no speech)
 
     def __init__(
         self,
@@ -48,6 +51,7 @@ class RecordingSessionManager:
         on_state_change: Optional[Callable[[RecordingStatus], None]] = None,
         on_transcription: Optional[Callable[[str], None]] = None,
         on_error: Optional[Callable[[str], None]] = None,
+        on_skipped: Optional[Callable[[str], None]] = None,
     ) -> None:
         """Initialize session manager with required components."""
         self._audio_capture = audio_capture
@@ -57,6 +61,7 @@ class RecordingSessionManager:
         self._on_state_change = on_state_change
         self._on_transcription = on_transcription
         self._on_error = on_error
+        self._on_skipped = on_skipped
 
         self._session: Optional[RecordingSession] = None
         self._lock = threading.Lock()
@@ -143,6 +148,31 @@ class RecordingSessionManager:
     def _transcribe_and_inject(self, audio) -> None:
         """Background task: transcribe audio and inject text."""
         try:
+            # Check if audio is too short (accidental press)
+            if len(audio) == 0:
+                with self._lock:
+                    if self._session:
+                        self._session.status = RecordingStatus.COMPLETE
+                self._notify_skipped("No audio captured")
+                return
+
+            duration = len(audio) / 16000  # Assuming 16kHz sample rate
+            if duration < self.MIN_RECORDING_DURATION:
+                with self._lock:
+                    if self._session:
+                        self._session.status = RecordingStatus.COMPLETE
+                self._notify_skipped("Too short (accidental press?)")
+                return
+
+            # Check if audio is too quiet (no speech detected)
+            rms = np.sqrt(np.mean(audio ** 2))
+            if rms < self.MIN_AUDIO_RMS:
+                with self._lock:
+                    if self._session:
+                        self._session.status = RecordingStatus.COMPLETE
+                self._notify_skipped("No speech detected")
+                return
+
             transcription_result = [None]
             transcription_error = [None]
 
@@ -218,3 +248,8 @@ class RecordingSessionManager:
         """Notify state change callback."""
         if self._on_state_change:
             self._on_state_change(status)
+
+    def _notify_skipped(self, reason: str) -> None:
+        """Notify skipped callback."""
+        if self._on_skipped:
+            self._on_skipped(reason)
