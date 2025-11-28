@@ -164,12 +164,16 @@ InfoPanel {
    Startup Config Box Styles
    ============================================ */
 
+BottomSection {
+    height: auto;
+    dock: bottom;
+}
+
 StartupConfigBox {
     border: round #00ff00;
     padding: 0 1;
     margin: 1 0 0 0;
     height: auto;
-    dock: bottom;
 }
 
 #timer-container {
@@ -182,12 +186,6 @@ StartupConfigBox {
     text-style: bold;
     padding: 0 0;
     margin-bottom: 0;
-}
-
-RuntimeOptionsBox {
-    height: auto;
-    dock: bottom;
-    padding: 0 0 1 0;
 }
 
 #transcript-logging-info {
