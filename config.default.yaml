@@ -33,6 +33,11 @@ injection:
   #       "tmux" sends to a specific tmux pane (configure below)
   mode: "focused"
 
+  # Automatically press Enter after injecting transcribed text
+  # Useful for hands-free command submission to Claude Code
+  # Toggle at runtime with 'a' key (session-only, doesn't persist)
+  auto_return: false
+
 # tmux integration settings (only used when injection.mode is "tmux")
 tmux:
   # Explicit session name, or null for auto-detect

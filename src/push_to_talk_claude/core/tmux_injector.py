@@ -97,6 +97,37 @@ class TmuxInjector:
         except Exception:
             return False
 
+    def send_enter(self) -> bool:
+        """
+        Send Enter keystroke to the tmux pane.
+
+        Returns:
+            True if keystroke succeeded
+
+        Raises:
+            RuntimeError: If no valid target found
+        """
+        if not self._target:
+            raise RuntimeError("No valid tmux target found")
+
+        if not self.validate_target():
+            raise RuntimeError("Target session/pane is no longer valid")
+
+        target_str = f"{self._target.session_name}:{self._target.window_index}.{self._target.pane_index}"
+
+        try:
+            result = subprocess.run(
+                ["tmux", "send-keys", "-t", target_str, "Enter"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+            return result.returncode == 0
+        except subprocess.TimeoutExpired:
+            return False
+        except Exception:
+            return False
+
     def find_claude_session(self) -> Optional[TmuxTarget]:
         """
         Find tmux session running Claude Code.
