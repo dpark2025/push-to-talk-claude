@@ -194,15 +194,14 @@ StartupConfigBox {
     padding: 0 1;
 }
 
-#divider {
-    color: #00ff00;
-    margin: 1 0;
-}
-
 #instruction-1 {
     color: #ff6666;
     text-style: bold;
-    padding: 0 1;
+    text-align: center;
+    padding: 1 2;
+    margin: 0 0 1 0;
+    background: $surface-darken-2;
+    border: round #ff6666;
 }
 
 /* ============================================

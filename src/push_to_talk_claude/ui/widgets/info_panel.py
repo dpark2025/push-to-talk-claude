@@ -28,6 +28,7 @@ class InfoPanel(Container):
     def compose(self) -> ComposeResult:
         """Yield widgets for app info display."""
         yield Static("🎤 Push-to-Talk Claude", id="title")
+        yield Static(self._get_instruction_text(), id="instruction-1")
         yield Static("", id="spacer-1")
 
         # Startup Configuration box
@@ -53,9 +54,6 @@ class InfoPanel(Container):
 
         yield Static("", id="spacer-3")
         yield RecordingTimer(id="recording-timer")
-        yield Static("", id="spacer-4")
-        yield Static("─" * 20, id="divider")
-        yield Static(self._get_instruction_text(), id="instruction-1")
 
     def _get_instruction_text(self) -> str:
         """Get instruction text based on injection mode."""
