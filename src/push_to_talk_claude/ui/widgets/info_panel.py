@@ -27,21 +27,14 @@ class InfoPanel(Container):
 
     def compose(self) -> ComposeResult:
         """Yield widgets for app info display."""
+        # Top section: Title and instruction
         yield Static("🎤 Push-to-Talk Claude", id="title")
         yield Static(self._get_instruction_text(), id="instruction-1")
-        yield Static("", id="spacer-1")
 
-        # Startup Configuration box
-        with StartupConfigBox(id="startup-config-box"):
-            yield Static("─ Startup Configuration ─", id="startup-config-label")
-            yield Static(f"Hotkey: {self.app_info.hotkey}", id="hotkey-info")
-            yield Static(f"Model: {self.app_info.whisper_model}", id="model-info")
-            yield Static(f"Mode: {self.app_info.injection_mode}", id="mode-info")
-            yield Static(f"Target: {self.app_info.target_info}", id="target-info")
+        # Middle section: Timer (centered vertically)
+        yield Container(RecordingTimer(id="recording-timer"), id="timer-container")
 
-        yield Static("", id="spacer-2")
-
-        # Runtime-toggleable options (outside the startup config box)
+        # Runtime-toggleable options
         auto_return_text = "ON" if self.app_info.auto_return else "OFF"
         yield Static(f"Auto-Return: {auto_return_text}", id="auto-return-info")
         transcript_logging_widget = Static(
@@ -52,8 +45,13 @@ class InfoPanel(Container):
             transcript_logging_widget.add_class("enabled")
         yield transcript_logging_widget
 
-        yield Static("", id="spacer-3")
-        yield RecordingTimer(id="recording-timer")
+        # Bottom section: Startup Configuration box
+        with StartupConfigBox(id="startup-config-box"):
+            yield Static("─ Startup Configuration ─", id="startup-config-label")
+            yield Static(f"Hotkey: {self.app_info.hotkey}", id="hotkey-info")
+            yield Static(f"Model: {self.app_info.whisper_model}", id="model-info")
+            yield Static(f"Mode: {self.app_info.injection_mode}", id="mode-info")
+            yield Static(f"Target: {self.app_info.target_info}", id="target-info")
 
     def _get_instruction_text(self) -> str:
         """Get instruction text based on injection mode."""
