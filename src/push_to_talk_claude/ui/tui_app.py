@@ -26,7 +26,6 @@ class PushToTalkTUI(App):
     """Main Textual application for push-to-talk interface."""
 
     CSS_PATH = Path(__file__).parent / "styles.tcss"
-    THEME = "catppuccin-mocha"
 
     BINDINGS = [
         Binding("a", "toggle_auto_return", "Auto-Return"),
@@ -52,6 +51,7 @@ class PushToTalkTUI(App):
             app_controller: Parent App instance for toggle operations
         """
         super().__init__(**kwargs)
+        self.theme = "catppuccin-mocha"
         self.config = config
         self.session_manager = session_manager
         self.app_controller = app_controller
