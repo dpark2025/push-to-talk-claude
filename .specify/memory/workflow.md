@@ -1,20 +1,44 @@
 # Workflow Reminders
 
-## Feature Branch Lifecycle
+## "Push" Command Convention
 
-After completing a spec (all speckit steps through implementation):
-
-1. **Commit** all changes with descriptive message
+When user says **"push"**, it means:
+1. **Commit** all work with descriptive message
 2. **Push** to remote repository
-3. **Create PR** to merge feature branch to main
-4. **Remove feature branch** after merge is complete
+3. **Create PR** using `gh pr create` with full summary
+
+Always include a comprehensive PR description summarizing:
+- What was implemented/fixed
+- Key changes made
+- Any configuration or usage notes
 
 ```bash
-# After implementation complete:
-git add -A && git commit -m "feat: complete <feature-name>"
+# Full "push" workflow:
+git add -A && git commit -m "feat/fix: <description>"
 git push origin <branch-name>
-gh pr create --title "feat: <feature-name>" --body "..."
-# After PR merged:
+gh pr create --title "<type>: <title>" --body "$(cat <<'EOF'
+## Summary
+<bullet points of what was done>
+
+## Changes
+<list of key files/components modified>
+
+## Testing
+<how it was tested>
+
+## Usage
+<any usage notes if applicable>
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+EOF
+)"
+```
+
+## Feature Branch Lifecycle
+
+After PR is merged:
+
+```bash
 git checkout main && git pull
 git branch -d <branch-name>
 git push origin --delete <branch-name>
