@@ -22,6 +22,8 @@ class TmuxInjector:
     def __init__(
         self,
         session_name: Optional[str] = None,
+        window_index: Optional[int] = None,
+        pane_index: Optional[int] = None,
         auto_detect: bool = True
     ) -> None:
         """
@@ -29,6 +31,8 @@ class TmuxInjector:
 
         Args:
             session_name: Explicit session or None for auto-detect
+            window_index: Explicit window index or None
+            pane_index: Explicit pane index or None
             auto_detect: Whether to auto-find Claude Code session
 
         Raises:
@@ -41,7 +45,15 @@ class TmuxInjector:
         self._session_name = session_name
         self._auto_detect = auto_detect
 
-        if auto_detect and not session_name:
+        if session_name and window_index is not None and pane_index is not None:
+            # Use fully explicit target
+            self._target = TmuxTarget(
+                session_name=session_name,
+                window_index=window_index,
+                pane_index=pane_index,
+                is_claude_code=True
+            )
+        elif auto_detect and not session_name:
             self._target = self.find_claude_session()
         elif session_name:
             # Use explicit session - get first window/pane

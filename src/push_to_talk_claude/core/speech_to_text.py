@@ -5,6 +5,12 @@ from dataclasses import dataclass
 import numpy as np
 import time
 import concurrent.futures
+import warnings
+
+# Suppress Whisper/PyTorch warnings
+warnings.filterwarnings("ignore", message="FP16 is not supported on CPU")
+warnings.filterwarnings("ignore", message="The given NumPy array is not writable")
+
 import torch
 import whisper
 

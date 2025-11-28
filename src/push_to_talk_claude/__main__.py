@@ -2,7 +2,11 @@
 
 import argparse
 import sys
+import warnings
 from pathlib import Path
+
+# Suppress multiprocessing resource tracker warnings on exit
+warnings.filterwarnings("ignore", message="resource_tracker:")
 
 
 def main() -> int:

@@ -89,6 +89,7 @@ def check_accessibility_permission() -> PermissionState:
         # Try to start and stop it quickly
         test_listener.start()
         test_listener.stop()
+        test_listener.join(timeout=2.0)  # Wait for thread to fully terminate
 
         return PermissionState.GRANTED
 

@@ -31,49 +31,73 @@ class App:
         Args:
             config: Configuration object, or None to load defaults
         """
-        self.config = config or Config.load_default()
+        self.config = config or Config.load()
         self._running = False
         self._shutdown_requested = False
 
-        # Core components
+        # Validate config
+        errors = self.config.validate()
+        if errors:
+            for error in errors:
+                logger.error(f"Config error: {error}")
+            raise ValueError(f"Invalid configuration: {errors[0]}")
+
+        # Utilities
+        self.sanitizer = InputSanitizer(self.config.security.max_input_length)
+        self.session_detector = SessionDetector()
+
+        # UI components
+        self.indicator = RecordingIndicator()
+        self.notifications = NotificationManager()
+        self.audio_feedback = AudioFeedback(self.config.push_to_talk.audio_feedback)
+
+        # Core components (initialized later)
         self.keyboard_monitor: Optional[KeyboardMonitor] = None
         self.audio_capture: Optional[AudioCapture] = None
         self.speech_to_text: Optional[SpeechToText] = None
         self.tmux_injector: Optional[TmuxInjector] = None
         self.session_manager: Optional[RecordingSessionManager] = None
 
-        # Utilities
-        self.sanitizer = InputSanitizer(self.config.sanitizer)
-        self.session_detector = SessionDetector()
-
-        # UI components
-        self.indicator = RecordingIndicator(self.config.ui)
-        self.notifications = NotificationManager(self.config.ui)
-        self.audio_feedback = AudioFeedback(self.config.push_to_talk.audio_feedback)
-
-        # Create core components
-        self._initialize_components()
-
     def _initialize_components(self) -> None:
         """Initialize all core components."""
-        # Audio capture
-        self.audio_capture = AudioCapture(
-            device_index=self.config.audio.device_index,
-            sample_rate=self.config.audio.sample_rate,
-            channels=self.config.audio.channels,
-            chunk_size=self.config.audio.chunk_size
+        # Audio capture with defaults (16kHz mono for Whisper)
+        self.audio_capture = AudioCapture()
+
+        # Speech to text with config
+        self.speech_to_text = SpeechToText(
+            model_name=self.config.whisper.model,
+            device=self.config.whisper.device,
+            language=self.config.whisper.language
         )
 
-        # Speech to text
-        self.speech_to_text = SpeechToText(self.config.transcription)
-
-        # Tmux injector (session will be set later)
-        self.tmux_injector = TmuxInjector(session_name="")
+        # Setup tmux injector based on config
+        if self.config.tmux.session_name and not self.config.tmux.auto_detect:
+            # Use explicit config
+            self.tmux_injector = TmuxInjector(
+                session_name=self.config.tmux.session_name,
+                window_index=self.config.tmux.window_index,
+                pane_index=self.config.tmux.pane_index,
+                auto_detect=False
+            )
+        else:
+            # Auto-detect Claude session
+            claude_session = self.session_detector.get_best_target()
+            if claude_session:
+                self.tmux_injector = TmuxInjector(
+                    session_name=claude_session.session_name,
+                    window_index=claude_session.window_index,
+                    pane_index=claude_session.pane_index,
+                    auto_detect=False
+                )
+            else:
+                self.tmux_injector = TmuxInjector(auto_detect=True)
 
         # Recording session manager
         self.session_manager = RecordingSessionManager(
             audio_capture=self.audio_capture,
             speech_to_text=self.speech_to_text,
+            tmux_injector=self.tmux_injector,
+            sanitizer=self.sanitizer,
             on_state_change=self._on_state_change,
             on_transcription=self._on_transcription,
             on_error=self._on_error
@@ -81,8 +105,7 @@ class App:
 
         # Keyboard monitor
         self.keyboard_monitor = KeyboardMonitor(
-            hotkey=self.config.hotkey.key,
-            modifiers=self.config.hotkey.modifiers,
+            hotkey=self.config.push_to_talk.hotkey,
             on_press=self._on_hotkey_press,
             on_release=self._on_hotkey_release
         )
@@ -101,30 +124,34 @@ class App:
 
         if permissions.microphone != PermissionState.GRANTED:
             logger.error("Microphone permission not granted")
-            self.notifications.show_error("Microphone permission required")
+            self.notifications.permission_error("Microphone")
             return False
 
         if permissions.accessibility != PermissionState.GRANTED:
             logger.error("Accessibility permission not granted")
-            self.notifications.show_error("Accessibility permission required for keyboard monitoring")
+            self.notifications.permission_error("Accessibility")
             return False
 
         # Check tmux available
-        if not self.tmux_injector.is_tmux_available():
+        if not TmuxInjector.is_tmux_available():
             logger.error("tmux not available")
-            self.notifications.show_error("tmux is required but not available")
+            self.notifications.error("tmux is required but not installed. Run: brew install tmux")
             return False
 
-        # Find Claude session
-        session_info = self.session_detector.find_claude_session()
-        if not session_info:
-            logger.error("No Claude session found")
-            self.notifications.show_error("No active Claude Code session found in tmux")
+        # Check for Claude session
+        if not self.session_detector.is_tmux_running():
+            logger.warning("tmux server not running")
+            self.notifications.warning("tmux server not running. Start with: tmux new-session -s claude 'claude'")
             return False
 
-        # Configure tmux injector with found session
-        self.tmux_injector.session_name = session_info.session_name
-        logger.info(f"Found Claude session: {session_info.session_name} (pane: {session_info.pane_id})")
+        claude_session = self.session_detector.get_best_target()
+        if not claude_session:
+            logger.warning("No Claude session found")
+            self.notifications.warning("No Claude Code session found. Start with: tmux new-session -s claude 'claude'")
+            return False
+
+        logger.info(f"Found Claude session: {claude_session.target_string}")
+        self.notifications.success(f"Found Claude session: {claude_session.target_string}")
 
         logger.info("All prerequisites met")
         return True
@@ -137,6 +164,9 @@ class App:
 
         logger.info("Starting push-to-talk voice interface...")
 
+        # Initialize components
+        self._initialize_components()
+
         # Setup signal handlers
         self._setup_signal_handlers()
 
@@ -146,18 +176,10 @@ class App:
         self._running = True
 
         # Show startup banner
-        hotkey_display = "+".join(self.config.hotkey.modifiers + [self.config.hotkey.key])
-        print("\n" + "=" * 60)
-        print("Push-to-Talk Voice Interface for Claude Code")
-        print("=" * 60)
-        print(f"Hotkey: {hotkey_display}")
-        print(f"Session: {self.tmux_injector.session_name}")
-        print(f"Transcription: {self.config.transcription.provider}")
-        print("\nPress and hold the hotkey to record voice input")
-        print("Press Ctrl+C to exit")
-        print("=" * 60 + "\n")
-
-        self.notifications.show_info("Voice interface started")
+        self.notifications.startup_banner(
+            hotkey=self.config.push_to_talk.hotkey,
+            model=self.config.whisper.model
+        )
 
     def stop(self) -> None:
         """Stop the voice interface and cleanup."""
@@ -170,17 +192,13 @@ class App:
         if self.keyboard_monitor:
             self.keyboard_monitor.stop()
 
-        if self.session_manager and self.session_manager.is_recording:
-            self.session_manager.stop_recording()
+        if self.session_manager:
+            self.session_manager.cancel()
 
         self._running = False
 
         # Show shutdown message
-        print("\n" + "=" * 60)
-        print("Voice interface stopped")
-        print("=" * 60 + "\n")
-
-        self.notifications.show_info("Voice interface stopped")
+        self.notifications.shutdown_message()
 
     def run(self) -> int:
         """
@@ -214,7 +232,7 @@ class App:
             return 0
         except Exception as e:
             logger.error(f"Fatal error: {e}", exc_info=True)
-            self.notifications.show_error(f"Fatal error: {e}")
+            self.notifications.error(f"Fatal error: {e}")
             return 1
         finally:
             self.stop()
@@ -254,9 +272,13 @@ class App:
         # Update indicator based on status
         if status == RecordingStatus.RECORDING:
             self.indicator.show_recording()
-        elif status == RecordingStatus.PROCESSING:
-            self.indicator.show_processing()
-        elif status == RecordingStatus.IDLE:
+        elif status == RecordingStatus.TRANSCRIBING:
+            self.indicator.show_transcribing()
+        elif status == RecordingStatus.INJECTING:
+            self.indicator.show_injecting()
+        elif status == RecordingStatus.COMPLETE:
+            self.indicator.hide()
+        elif status == RecordingStatus.ERROR:
             self.indicator.hide()
 
     def _on_transcription(self, text: str) -> None:
@@ -264,38 +286,23 @@ class App:
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(f"Transcription received: {text}")
 
-        # Sanitize the input
-        sanitized = self.sanitizer.sanitize(text)
-
-        if logger.isEnabledFor(logging.DEBUG):
-            logger.debug(f"Sanitized text: {sanitized}")
-
-        # Update indicator to show success
-        self.indicator.show_success()
-
-        # Inject into tmux
-        try:
-            self.tmux_injector.inject_text(sanitized)
-            logger.info("Text injected successfully")
-            self.notifications.show_success("Voice input sent")
-        except Exception as e:
-            logger.error(f"Error injecting text: {e}", exc_info=True)
-            self._on_error(f"Failed to inject text: {e}")
+        if text and text.strip():
+            self.indicator.show_complete(text)
+            logger.info(f"Transcription: {text[:50]}...")
 
     def _on_error(self, error: str) -> None:
         """Handle errors."""
         logger.error(f"Error: {error}")
         self.audio_feedback.play_error()
-        self.notifications.show_error(error)
-        self.indicator.show_error()
+        self.notifications.error(error)
+        self.indicator.show_error(error)
 
     def _setup_signal_handlers(self) -> None:
         """Setup SIGINT/SIGTERM handlers for graceful shutdown."""
         def signal_handler(signum, frame):
             logger.info(f"Received signal {signum}")
             self._shutdown_requested = True
-            self.stop()
-            sys.exit(0)
+            self._running = False
 
         signal.signal(signal.SIGINT, signal_handler)
         signal.signal(signal.SIGTERM, signal_handler)

@@ -37,7 +37,7 @@ class RecordingSessionManager:
     """Manages the lifecycle of recording sessions."""
 
     MAX_RECORDING_DURATION = 60.0  # seconds
-    TRANSCRIPTION_TIMEOUT = 5.0  # seconds
+    TRANSCRIPTION_TIMEOUT = 30.0  # seconds (needs time for model init on first run)
 
     def __init__(
         self,
