@@ -1,7 +1,6 @@
 """Recording session state machine for push-to-talk interactions."""
 
 import threading
-import time
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -232,12 +231,9 @@ class RecordingSessionManager:
                     self._session.status = RecordingStatus.INJECTING
             self._notify_state_change(RecordingStatus.INJECTING)
 
-            self._tmux_injector.inject_text(sanitized)
-
-            # Send Enter keystroke if auto_return enabled and text was injected
-            if self._auto_return and sanitized:
-                time.sleep(0.1)  # Brief delay to ensure text is fully processed
-                self._tmux_injector.send_enter()
+            # Append newline if auto_return enabled
+            text_to_send = sanitized + "\n" if self._auto_return else sanitized
+            self._tmux_injector.inject_text(text_to_send)
 
             with self._lock:
                 if self._session:
