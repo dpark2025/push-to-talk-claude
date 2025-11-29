@@ -9,18 +9,17 @@ The Textual TUI provides a better user experience with:
 This module is kept for backward compatibility when TUI mode is disabled.
 """
 
-import warnings
+import threading
+
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
-from typing import Optional
-import threading
 
 
 class RecordingIndicator:
     """Visual indicator showing recording status (thread-safe)."""
 
-    def __init__(self, console: Optional[Console] = None) -> None:
+    def __init__(self, console: Console | None = None) -> None:
         """Initialize indicator."""
         self.console = console or Console()
         self.current_duration: float = 0.0

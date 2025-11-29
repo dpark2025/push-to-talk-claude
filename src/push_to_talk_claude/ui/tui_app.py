@@ -7,19 +7,17 @@ from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal
 from textual.widgets import Footer
-from textual.worker import Worker, get_current_worker
 
 from push_to_talk_claude.core.recording_session import RecordingStatus
 from push_to_talk_claude.ui.models import AppInfo, LogBuffer
 from push_to_talk_claude.ui.widgets.info_panel import InfoPanel
-from push_to_talk_claude.ui.widgets.status_panel import StatusPanel
 from push_to_talk_claude.ui.widgets.log_modal import LogModal
+from push_to_talk_claude.ui.widgets.status_panel import StatusPanel
 
 if TYPE_CHECKING:
-    from push_to_talk_claude.utils.config import Config
-    from push_to_talk_claude.core.recording_session import RecordingSessionManager
-    from push_to_talk_claude.core.speech_to_text import SpeechToText
     from push_to_talk_claude.app import App as AppController
+    from push_to_talk_claude.core.recording_session import RecordingSessionManager
+    from push_to_talk_claude.utils.config import Config
 
 
 class PushToTalkTUI(App):
@@ -63,14 +61,15 @@ class PushToTalkTUI(App):
     def watch_theme(self, theme: str) -> None:
         """Save theme changes to config file."""
         # Skip if not yet fully initialized
-        if not hasattr(self, 'config') or self.config is None:
+        if not hasattr(self, "config") or self.config is None:
             return
-        if not hasattr(self, 'log_buffer') or self.log_buffer is None:
+        if not hasattr(self, "log_buffer") or self.log_buffer is None:
             return
         if self.config.ui.theme != theme:
             self.config.ui.theme = theme
             # Save to config file
             from push_to_talk_claude.utils.config import Config
+
             config_path = Config.ensure_config_exists()
             self.config.save(config_path)
             self.log_buffer.append("INFO", f"Theme changed to: {theme}")

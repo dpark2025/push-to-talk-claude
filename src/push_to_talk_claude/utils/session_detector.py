@@ -1,7 +1,6 @@
-from typing import Optional, List
-from dataclasses import dataclass
-import subprocess
 import os
+import subprocess
+from dataclasses import dataclass
 
 
 @dataclass
@@ -29,14 +28,14 @@ class SessionDetector:
 
     def __init__(self) -> None:
         """Initialize session detector."""
-        self._panes: List[TmuxPane] = []
+        self._panes: list[TmuxPane] = []
         self.refresh()
 
-    def list_all_panes(self) -> List[TmuxPane]:
+    def list_all_panes(self) -> list[TmuxPane]:
         """List all panes across all tmux sessions."""
         return self._panes
 
-    def find_claude_panes(self) -> List[ClaudeSession]:
+    def find_claude_panes(self) -> list[ClaudeSession]:
         """Find all panes running Claude Code."""
         claude_sessions = []
 
@@ -44,16 +43,18 @@ class SessionDetector:
             command_lower = pane.current_command.lower()
             if any(indicator.lower() in command_lower for indicator in self.CLAUDE_INDICATORS):
                 target_string = f"{pane.session_name}:{pane.window_index}.{pane.pane_index}"
-                claude_sessions.append(ClaudeSession(
-                    session_name=pane.session_name,
-                    window_index=pane.window_index,
-                    pane_index=pane.pane_index,
-                    target_string=target_string
-                ))
+                claude_sessions.append(
+                    ClaudeSession(
+                        session_name=pane.session_name,
+                        window_index=pane.window_index,
+                        pane_index=pane.pane_index,
+                        target_string=target_string,
+                    )
+                )
 
         return claude_sessions
 
-    def get_best_target(self) -> Optional[ClaudeSession]:
+    def get_best_target(self) -> ClaudeSession | None:
         """
         Get the best Claude session to target.
 
@@ -77,7 +78,7 @@ class SessionDetector:
                         session_name=pane.session_name,
                         window_index=pane.window_index,
                         pane_index=pane.pane_index,
-                        target_string=target_string
+                        target_string=target_string,
                     )
 
         # Return first Claude pane found
@@ -92,11 +93,16 @@ class SessionDetector:
 
         try:
             result = subprocess.run(
-                ["tmux", "list-panes", "-a", "-F",
-                 "#{session_name}|#{window_index}|#{pane_index}|#{pane_current_command}|#{pane_active}"],
+                [
+                    "tmux",
+                    "list-panes",
+                    "-a",
+                    "-F",
+                    "#{session_name}|#{window_index}|#{pane_index}|#{pane_current_command}|#{pane_active}",
+                ],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
 
             for line in result.stdout.strip().split("\n"):
@@ -109,13 +115,15 @@ class SessionDetector:
 
                 session_name, window_index, pane_index, current_command, pane_active = parts
 
-                self._panes.append(TmuxPane(
-                    session_name=session_name,
-                    window_index=int(window_index),
-                    pane_index=int(pane_index),
-                    current_command=current_command,
-                    is_active=(pane_active == "1")
-                ))
+                self._panes.append(
+                    TmuxPane(
+                        session_name=session_name,
+                        window_index=int(window_index),
+                        pane_index=int(pane_index),
+                        current_command=current_command,
+                        is_active=(pane_active == "1"),
+                    )
+                )
         except subprocess.CalledProcessError:
             pass
 
@@ -123,17 +131,13 @@ class SessionDetector:
     def is_tmux_running() -> bool:
         """Check if tmux server is running."""
         try:
-            subprocess.run(
-                ["tmux", "list-sessions"],
-                capture_output=True,
-                check=True
-            )
+            subprocess.run(["tmux", "list-sessions"], capture_output=True, check=True)
             return True
         except (subprocess.CalledProcessError, FileNotFoundError):
             return False
 
     @staticmethod
-    def get_current_session() -> Optional[str]:
+    def get_current_session() -> str | None:
         """Get current tmux session name if inside tmux."""
         tmux_env = os.environ.get("TMUX")
         if not tmux_env:
@@ -144,7 +148,7 @@ class SessionDetector:
                 ["tmux", "display-message", "-p", "#{session_name}"],
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
             )
             return result.stdout.strip()
         except subprocess.CalledProcessError:

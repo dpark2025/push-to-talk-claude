@@ -1,7 +1,7 @@
 """StatusPanel widget - right panel containing vertically stacked status pills."""
 
-from textual.containers import Container
 from textual.app import ComposeResult
+from textual.containers import Container
 from textual.reactive import reactive
 
 from push_to_talk_claude.core.recording_session import RecordingStatus

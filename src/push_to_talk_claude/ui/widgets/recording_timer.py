@@ -2,9 +2,9 @@
 
 from time import monotonic
 
-from textual.widgets import Static
 from textual.reactive import reactive
 from textual.timer import Timer
+from textual.widgets import Static
 
 
 class RecordingTimer(Static):

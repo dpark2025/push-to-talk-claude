@@ -1,17 +1,18 @@
 """Tests for UI data models."""
 
-import pytest
 from unittest.mock import Mock
 
-from push_to_talk_claude.ui.models import (
-    StatusPillConfig,
-    LogEntry,
-    LogBuffer,
-    AppInfo,
-    TimerState,
-    STATUS_PILLS,
-)
+import pytest
+
 from push_to_talk_claude.core.recording_session import RecordingStatus
+from push_to_talk_claude.ui.models import (
+    STATUS_PILLS,
+    AppInfo,
+    LogBuffer,
+    LogEntry,
+    StatusPillConfig,
+    TimerState,
+)
 
 
 class TestStatusPillConfig:
@@ -21,12 +22,13 @@ class TestStatusPillConfig:
         config = StatusPillConfig(
             status=RecordingStatus.RECORDING,
             label="Recording",
-            emoji="🔴",
+            icon="●",
+            icon_color="red",
             color="$error",
         )
         assert config.status == RecordingStatus.RECORDING
         assert config.label == "Recording"
-        assert config.emoji == "🔴"
+        assert config.icon == "●"
         assert config.color == "$error"
 
     def test_status_pills_default_list(self):
@@ -102,6 +104,9 @@ class TestAppInfo:
             whisper_model="tiny",
             injection_mode="focused",
             target_info="Active window",
+            auto_return=False,
+            transcript_logging="OFF",
+            tts_hook_enabled=False,
         )
         assert info.hotkey == "ctrl_r"
         assert info.whisper_model == "tiny"
@@ -113,6 +118,9 @@ class TestAppInfo:
         mock_config.push_to_talk.hotkey = "ctrl_r"
         mock_config.whisper.model = "tiny"
         mock_config.injection.mode = "focused"
+        mock_config.injection.auto_return = False
+        mock_config.logging.save_transcripts = False
+        mock_config.logging.transcripts_dir = "/tmp/transcripts"
 
         info = AppInfo.from_config(mock_config)
         assert info.hotkey == "ctrl_r"
@@ -125,9 +133,12 @@ class TestAppInfo:
         mock_config.push_to_talk.hotkey = "ctrl_r"
         mock_config.whisper.model = "base"
         mock_config.injection.mode = "tmux"
+        mock_config.injection.auto_return = False
         mock_config.tmux.session_name = "claude"
         mock_config.tmux.window_index = 0
         mock_config.tmux.pane_index = 1
+        mock_config.logging.save_transcripts = False
+        mock_config.logging.transcripts_dir = "/tmp/transcripts"
 
         info = AppInfo.from_config(mock_config)
         assert info.injection_mode == "tmux"

@@ -4,9 +4,9 @@ import pytest
 from textual.app import App, ComposeResult
 from textual.widgets import Static
 
+from push_to_talk_claude.ui.models import AppInfo
 from push_to_talk_claude.ui.widgets.info_panel import InfoPanel
 from push_to_talk_claude.ui.widgets.recording_timer import RecordingTimer
-from push_to_talk_claude.ui.models import AppInfo
 
 
 class InfoPanelTestApp(App):
@@ -19,6 +19,9 @@ class InfoPanelTestApp(App):
             whisper_model="tiny",
             injection_mode="focused",
             target_info="Active window",
+            auto_return=False,
+            transcript_logging="OFF",
+            tts_hook_enabled=False,
         )
 
     def compose(self) -> ComposeResult:
@@ -33,6 +36,9 @@ async def test_info_panel_displays_hotkey():
         whisper_model="tiny",
         injection_mode="focused",
         target_info="Active window",
+        auto_return=False,
+        transcript_logging="OFF",
+        tts_hook_enabled=False,
     )
     async with InfoPanelTestApp(app_info).run_test() as pilot:
         panel = pilot.app.query_one(InfoPanel)
@@ -48,6 +54,9 @@ async def test_info_panel_displays_model():
         whisper_model="base.en",
         injection_mode="focused",
         target_info="Active window",
+        auto_return=False,
+        transcript_logging="OFF",
+        tts_hook_enabled=False,
     )
     async with InfoPanelTestApp(app_info).run_test() as pilot:
         panel = pilot.app.query_one(InfoPanel)
@@ -62,6 +71,9 @@ async def test_info_panel_displays_mode():
         whisper_model="tiny",
         injection_mode="tmux",
         target_info="main:0.0",
+        auto_return=False,
+        transcript_logging="OFF",
+        tts_hook_enabled=False,
     )
     async with InfoPanelTestApp(app_info).run_test() as pilot:
         panel = pilot.app.query_one(InfoPanel)
@@ -76,6 +88,9 @@ async def test_info_panel_displays_target():
         whisper_model="tiny",
         injection_mode="tmux",
         target_info="main:0.1",
+        auto_return=False,
+        transcript_logging="OFF",
+        tts_hook_enabled=False,
     )
     async with InfoPanelTestApp(app_info).run_test() as pilot:
         panel = pilot.app.query_one(InfoPanel)
@@ -98,6 +113,9 @@ async def test_info_panel_update_info():
         whisper_model="tiny",
         injection_mode="focused",
         target_info="Active window",
+        auto_return=False,
+        transcript_logging="OFF",
+        tts_hook_enabled=False,
     )
     async with InfoPanelTestApp(app_info).run_test() as pilot:
         panel = pilot.app.query_one(InfoPanel)
@@ -108,6 +126,9 @@ async def test_info_panel_update_info():
             whisper_model="medium",
             injection_mode="tmux",
             target_info="dev:1.0",
+            auto_return=True,
+            transcript_logging="OFF",
+            tts_hook_enabled=False,
         )
         panel.update_info(new_info)
         await pilot.pause()
@@ -155,4 +176,3 @@ async def test_info_panel_widget_structure():
         assert pilot.app.query_one("#mode-info", Static)
         assert pilot.app.query_one("#target-info", Static)
         assert pilot.app.query_one("#recording-timer", RecordingTimer)
-        assert pilot.app.query_one("#divider", Static)

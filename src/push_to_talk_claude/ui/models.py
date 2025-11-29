@@ -1,10 +1,10 @@
 """Data models for the Textual TUI interface."""
 
-from dataclasses import dataclass, field
-from datetime import datetime
-from collections import deque
-from typing import TYPE_CHECKING
 import time
+from collections import deque
+from dataclasses import dataclass
+from datetime import datetime
+from typing import TYPE_CHECKING
 
 from push_to_talk_claude.core.recording_session import RecordingStatus
 
@@ -59,9 +59,7 @@ class LogBuffer:
 
     def append(self, level: str, message: str) -> None:
         """Add a new log entry to the buffer."""
-        self.entries.append(
-            LogEntry(timestamp=time.time(), level=level, message=message)
-        )
+        self.entries.append(LogEntry(timestamp=time.time(), level=level, message=message))
 
     def __iter__(self):
         return iter(self.entries)
@@ -92,16 +90,19 @@ class AppInfo:
         if config.injection.mode == "focused":
             target = "Active window"
         else:
-            target = f"{config.tmux.session_name}:{config.tmux.window_index}.{config.tmux.pane_index}"
+            t = config.tmux
+            target = f"{t.session_name}:{t.window_index}.{t.pane_index}"
 
         if config.logging.save_transcripts:
             from pathlib import Path
+
             transcript_logging = str(Path(config.logging.transcripts_dir).resolve())
         else:
             transcript_logging = "OFF"
 
         # Check for TTS hook flag file
         from pathlib import Path
+
         tts_flag_file = Path.home() / ".claude-voice" / "tts-hook-enabled"
         tts_hook_enabled = tts_flag_file.exists()
 

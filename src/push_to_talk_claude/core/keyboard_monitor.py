@@ -1,12 +1,13 @@
 """Keyboard monitoring for push-to-talk hotkey detection."""
 
-from typing import Dict, Any, Callable, Optional
-from enum import Enum
 import threading
+from collections.abc import Callable
+from enum import Enum
+from typing import Any
 
 # Map user-friendly key names to pynput Key objects
 # These will be resolved at runtime when pynput is imported
-SUPPORTED_HOTKEYS: Dict[str, str] = {
+SUPPORTED_HOTKEYS: dict[str, str] = {
     # Modifier keys
     "ctrl_r": "Key.ctrl_r",
     "ctrl_l": "Key.ctrl_l",
@@ -16,7 +17,6 @@ SUPPORTED_HOTKEYS: Dict[str, str] = {
     "cmd_l": "Key.cmd_l",
     "shift_r": "Key.shift_r",
     "shift_l": "Key.shift_l",
-
     # Function keys (F13-F20 are great for dedicated hotkeys)
     "f13": "Key.f13",
     "f14": "Key.f14",
@@ -26,7 +26,6 @@ SUPPORTED_HOTKEYS: Dict[str, str] = {
     "f18": "Key.f18",
     "f19": "Key.f19",
     "f20": "Key.f20",
-
     # Standard function keys
     "f1": "Key.f1",
     "f2": "Key.f2",
@@ -89,6 +88,7 @@ def is_valid_hotkey(hotkey_name: str) -> bool:
 
 class HotkeyState(Enum):
     """State of the monitored hotkey."""
+
     IDLE = "idle"
     PRESSED = "pressed"
 
@@ -103,10 +103,7 @@ class KeyboardMonitor:
     POLL_INTERVAL = 0.1  # 100ms
 
     def __init__(
-        self,
-        hotkey: str,
-        on_press: Callable[[], None],
-        on_release: Callable[[], None]
+        self, hotkey: str, on_press: Callable[[], None], on_release: Callable[[], None]
     ) -> None:
         """
         Initialize keyboard monitor.
@@ -130,10 +127,10 @@ class KeyboardMonitor:
 
         self._state = HotkeyState.IDLE
         self._state_lock = threading.Lock()
-        self._listener: Optional[Any] = None
+        self._listener: Any | None = None
         self._is_listening = threading.Event()
-        self._watchdog_timer: Optional[threading.Timer] = None
-        self._poll_thread: Optional[threading.Thread] = None
+        self._watchdog_timer: threading.Timer | None = None
+        self._poll_thread: threading.Thread | None = None
         self._stop_polling = threading.Event()
 
     def start(self) -> None:
@@ -211,25 +208,37 @@ class KeyboardMonitor:
 
             if self._hotkey_name in modifier_map:
                 # Get current modifier flags
-                flags = Quartz.CGEventSourceFlagsState(
-                    Quartz.kCGEventSourceStateHIDSystemState
-                )
+                flags = Quartz.CGEventSourceFlagsState(Quartz.kCGEventSourceStateHIDSystemState)
                 return bool(flags & modifier_map[self._hotkey_name])
 
             # For function keys, check using CGEventSourceKeyState
             # Map F-key names to key codes
             fkey_map = {
-                "f1": 122, "f2": 120, "f3": 99, "f4": 118,
-                "f5": 96, "f6": 97, "f7": 98, "f8": 100,
-                "f9": 101, "f10": 109, "f11": 103, "f12": 111,
-                "f13": 105, "f14": 107, "f15": 113, "f16": 106,
-                "f17": 64, "f18": 79, "f19": 80, "f20": 90,
+                "f1": 122,
+                "f2": 120,
+                "f3": 99,
+                "f4": 118,
+                "f5": 96,
+                "f6": 97,
+                "f7": 98,
+                "f8": 100,
+                "f9": 101,
+                "f10": 109,
+                "f11": 103,
+                "f12": 111,
+                "f13": 105,
+                "f14": 107,
+                "f15": 113,
+                "f16": 106,
+                "f17": 64,
+                "f18": 79,
+                "f19": 80,
+                "f20": 90,
             }
 
             if self._hotkey_name in fkey_map:
                 return Quartz.CGEventSourceKeyState(
-                    Quartz.kCGEventSourceStateHIDSystemState,
-                    fkey_map[self._hotkey_name]
+                    Quartz.kCGEventSourceStateHIDSystemState, fkey_map[self._hotkey_name]
                 )
 
             # Default: assume still pressed
@@ -241,10 +250,7 @@ class KeyboardMonitor:
     def _start_watchdog(self) -> None:
         """Start watchdog timer to detect stuck key."""
         self._cancel_watchdog()
-        self._watchdog_timer = threading.Timer(
-            self.STUCK_KEY_TIMEOUT,
-            self._force_release
-        )
+        self._watchdog_timer = threading.Timer(self.STUCK_KEY_TIMEOUT, self._force_release)
         self._watchdog_timer.daemon = True
         self._watchdog_timer.start()
 
@@ -271,7 +277,7 @@ class KeyboardMonitor:
                 # Stop the listener - this signals it to stop
                 self._listener.stop()
                 # Join with timeout to prevent hanging
-                if hasattr(self._listener, 'join'):
+                if hasattr(self._listener, "join"):
                     self._listener.join(timeout=1.0)
             except Exception:
                 pass  # Ignore errors during cleanup

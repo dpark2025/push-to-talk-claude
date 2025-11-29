@@ -1,7 +1,7 @@
 """StatusPill widget - individual status indicator that lights up when active."""
 
-from textual.widgets import Static
 from textual.reactive import reactive
+from textual.widgets import Static
 
 from push_to_talk_claude.core.recording_session import RecordingStatus
 

@@ -1,8 +1,7 @@
-from enum import Enum
+import subprocess
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
-import subprocess
+from enum import Enum
 
 
 class PermissionState(Enum):
@@ -29,10 +28,7 @@ def check_microphone_permission() -> PermissionState:
     try:
         # First check if we have any input devices
         result = subprocess.run(
-            ["system_profiler", "SPAudioDataType"],
-            capture_output=True,
-            text=True,
-            timeout=5
+            ["system_profiler", "SPAudioDataType"], capture_output=True, text=True, timeout=5
         )
 
         if result.returncode != 0:
@@ -45,13 +41,14 @@ def check_microphone_permission() -> PermissionState:
         # Try to import and test PyAudio if available
         try:
             import pyaudio
+
             p = pyaudio.PyAudio()
 
             # Check if we can get input device count
             input_devices = 0
             for i in range(p.get_device_count()):
                 device_info = p.get_device_info_by_index(i)
-                if device_info.get('maxInputChannels', 0) > 0:
+                if device_info.get("maxInputChannels", 0) > 0:
                     input_devices += 1
 
             p.terminate()
@@ -96,16 +93,13 @@ def check_accessibility_permission() -> PermissionState:
     except ImportError:
         # pynput not available, try osascript test
         try:
-            script = '''
+            script = """
             tell application "System Events"
                 keystroke "test" using command down
             end tell
-            '''
+            """
             result = subprocess.run(
-                ["osascript", "-e", script],
-                capture_output=True,
-                text=True,
-                timeout=2
+                ["osascript", "-e", script], capture_output=True, text=True, timeout=2
             )
 
             # If we get an error about not being allowed, permission is denied
@@ -132,7 +126,7 @@ def check_all_permissions() -> PermissionStatus:
     return PermissionStatus(
         microphone=check_microphone_permission(),
         accessibility=check_accessibility_permission(),
-        checked_at=datetime.now()
+        checked_at=datetime.now(),
     )
 
 
@@ -177,12 +171,7 @@ Path: System Settings > Privacy & Security > Accessibility"""
 def check_tmux_available() -> bool:
     """Check if tmux is installed and accessible."""
     try:
-        result = subprocess.run(
-            ["which", "tmux"],
-            capture_output=True,
-            text=True,
-            timeout=2
-        )
+        result = subprocess.run(["which", "tmux"], capture_output=True, text=True, timeout=2)
         return result.returncode == 0 and len(result.stdout.strip()) > 0
     except Exception:
         return False
@@ -191,12 +180,7 @@ def check_tmux_available() -> bool:
 def check_ffmpeg_available() -> bool:
     """Check if ffmpeg is installed (needed for some audio formats)."""
     try:
-        result = subprocess.run(
-            ["which", "ffmpeg"],
-            capture_output=True,
-            text=True,
-            timeout=2
-        )
+        result = subprocess.run(["which", "ffmpeg"], capture_output=True, text=True, timeout=2)
         return result.returncode == 0 and len(result.stdout.strip()) > 0
     except Exception:
         return False

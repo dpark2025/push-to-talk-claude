@@ -3,10 +3,10 @@
 import pytest
 from textual.app import App, ComposeResult
 
+from push_to_talk_claude.core.recording_session import RecordingStatus
+from push_to_talk_claude.ui.widgets.recording_timer import RecordingTimer
 from push_to_talk_claude.ui.widgets.status_panel import StatusPanel
 from push_to_talk_claude.ui.widgets.status_pill import StatusPill
-from push_to_talk_claude.ui.widgets.recording_timer import RecordingTimer
-from push_to_talk_claude.core.recording_session import RecordingStatus
 
 
 class DegradationTestApp(App):

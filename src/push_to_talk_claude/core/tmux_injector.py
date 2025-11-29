@@ -1,9 +1,8 @@
 """Tmux session injection for sending text to Claude Code."""
 
-from typing import Optional
-from dataclasses import dataclass
-import subprocess
 import shutil
+import subprocess
+from dataclasses import dataclass
 
 
 @dataclass
@@ -21,10 +20,10 @@ class TmuxInjector:
 
     def __init__(
         self,
-        session_name: Optional[str] = None,
-        window_index: Optional[int] = None,
-        pane_index: Optional[int] = None,
-        auto_detect: bool = True
+        session_name: str | None = None,
+        window_index: int | None = None,
+        pane_index: int | None = None,
+        auto_detect: bool = True,
     ) -> None:
         """
         Initialize tmux injector.
@@ -41,7 +40,7 @@ class TmuxInjector:
         if not self.is_tmux_available():
             raise RuntimeError("tmux is not installed or not accessible")
 
-        self._target: Optional[TmuxTarget] = None
+        self._target: TmuxTarget | None = None
         self._session_name = session_name
         self._auto_detect = auto_detect
 
@@ -51,7 +50,7 @@ class TmuxInjector:
                 session_name=session_name,
                 window_index=window_index,
                 pane_index=pane_index,
-                is_claude_code=True
+                is_claude_code=True,
             )
         elif auto_detect and not session_name:
             self._target = self.find_claude_session()
@@ -82,14 +81,15 @@ class TmuxInjector:
         if not self.validate_target():
             raise RuntimeError("Target session/pane is no longer valid")
 
-        target_str = f"{self._target.session_name}:{self._target.window_index}.{self._target.pane_index}"
+        t = self._target
+        target_str = f"{t.session_name}:{t.window_index}.{t.pane_index}"
 
         try:
             result = subprocess.run(
                 ["tmux", "send-keys", "-t", target_str, "--", text],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
             return result.returncode == 0
         except subprocess.TimeoutExpired:
@@ -113,14 +113,15 @@ class TmuxInjector:
         if not self.validate_target():
             raise RuntimeError("Target session/pane is no longer valid")
 
-        target_str = f"{self._target.session_name}:{self._target.window_index}.{self._target.pane_index}"
+        t = self._target
+        target_str = f"{t.session_name}:{t.window_index}.{t.pane_index}"
 
         try:
             result = subprocess.run(
                 ["tmux", "send-keys", "-t", target_str, "Enter"],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
             return result.returncode == 0
         except subprocess.TimeoutExpired:
@@ -128,7 +129,7 @@ class TmuxInjector:
         except Exception:
             return False
 
-    def find_claude_session(self) -> Optional[TmuxTarget]:
+    def find_claude_session(self) -> TmuxTarget | None:
         """
         Find tmux session running Claude Code.
 
@@ -141,14 +142,14 @@ class TmuxInjector:
                 ["tmux", "list-sessions", "-F", "#{session_name}"],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
 
             if result.returncode != 0:
                 return None
 
-            sessions = result.stdout.strip().split('\n')
-            if not sessions or sessions == ['']:
+            sessions = result.stdout.strip().split("\n")
+            if not sessions or sessions == [""]:
                 return None
 
             # Check each session for Claude Code
@@ -159,33 +160,39 @@ class TmuxInjector:
 
                 # List panes in this session
                 pane_result = subprocess.run(
-                    ["tmux", "list-panes", "-t", session, "-F",
-                     "#{window_index}:#{pane_index}:#{pane_current_command}"],
+                    [
+                        "tmux",
+                        "list-panes",
+                        "-t",
+                        session,
+                        "-F",
+                        "#{window_index}:#{pane_index}:#{pane_current_command}",
+                    ],
                     capture_output=True,
                     text=True,
-                    timeout=5
+                    timeout=5,
                 )
 
                 if pane_result.returncode != 0:
                     continue
 
-                panes = pane_result.stdout.strip().split('\n')
+                panes = pane_result.stdout.strip().split("\n")
                 for pane in panes:
                     if not pane:
                         continue
 
-                    parts = pane.split(':')
+                    parts = pane.split(":")
                     if len(parts) >= 3:
                         window_idx = int(parts[0])
                         pane_idx = int(parts[1])
-                        command = ':'.join(parts[2:])  # Rejoin in case command has colons
+                        command = ":".join(parts[2:])  # Rejoin in case command has colons
 
-                        if 'claude' in command.lower():
+                        if "claude" in command.lower():
                             return TmuxTarget(
                                 session_name=session,
                                 window_index=window_idx,
                                 pane_index=pane_idx,
-                                is_claude_code=True
+                                is_claude_code=True,
                             )
 
             return None
@@ -200,14 +207,15 @@ class TmuxInjector:
         if not self._target:
             return False
 
-        target_str = f"{self._target.session_name}:{self._target.window_index}.{self._target.pane_index}"
+        t = self._target
+        target_str = f"{t.session_name}:{t.window_index}.{t.pane_index}"
 
         try:
             result = subprocess.run(
                 ["tmux", "list-panes", "-t", target_str, "-F", "#{pane_id}"],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
             return result.returncode == 0
         except subprocess.TimeoutExpired:
@@ -216,7 +224,7 @@ class TmuxInjector:
             return False
 
     @property
-    def target(self) -> Optional[TmuxTarget]:
+    def target(self) -> TmuxTarget | None:
         """Current injection target."""
         return self._target
 
@@ -225,36 +233,42 @@ class TmuxInjector:
         """Check if tmux is installed and accessible."""
         return shutil.which("tmux") is not None
 
-    def _get_first_pane(self, session_name: str) -> Optional[TmuxTarget]:
+    def _get_first_pane(self, session_name: str) -> TmuxTarget | None:
         """Get the first pane in a session."""
         try:
             result = subprocess.run(
-                ["tmux", "list-panes", "-t", session_name, "-F",
-                 "#{window_index}:#{pane_index}:#{pane_current_command}"],
+                [
+                    "tmux",
+                    "list-panes",
+                    "-t",
+                    session_name,
+                    "-F",
+                    "#{window_index}:#{pane_index}:#{pane_current_command}",
+                ],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=5,
             )
 
             if result.returncode != 0:
                 return None
 
-            panes = result.stdout.strip().split('\n')
-            if not panes or panes == ['']:
+            panes = result.stdout.strip().split("\n")
+            if not panes or panes == [""]:
                 return None
 
             first_pane = panes[0]
-            parts = first_pane.split(':')
+            parts = first_pane.split(":")
             if len(parts) >= 2:
                 window_idx = int(parts[0])
                 pane_idx = int(parts[1])
-                command = ':'.join(parts[2:]) if len(parts) > 2 else ''
+                command = ":".join(parts[2:]) if len(parts) > 2 else ""
 
                 return TmuxTarget(
                     session_name=session_name,
                     window_index=window_idx,
                     pane_index=pane_idx,
-                    is_claude_code='claude' in command.lower()
+                    is_claude_code="claude" in command.lower(),
                 )
 
             return None

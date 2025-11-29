@@ -24,7 +24,7 @@ for device in devices:
 # Test 3: Initialize capture
 print("\nTest 3: Initializing audio capture...")
 capture = AudioCapture(sample_rate=16000, channels=1, frame_size=1024)
-print(f"✓ AudioCapture initialized")
+print("✓ AudioCapture initialized")
 print(f"  is_recording: {capture.is_recording}")
 print(f"  duration_seconds: {capture.duration_seconds}")
 
@@ -34,7 +34,7 @@ capture.start_recording()
 print(f"✓ Recording started, is_recording: {capture.is_recording}")
 time.sleep(2)
 audio_data = capture.stop_recording()
-print(f"✓ Recording stopped")
+print("✓ Recording stopped")
 print(f"  Audio shape: {audio_data.shape}")
 print(f"  Audio dtype: {audio_data.dtype}")
 print(f"  Duration: {capture.duration_seconds:.2f} seconds")

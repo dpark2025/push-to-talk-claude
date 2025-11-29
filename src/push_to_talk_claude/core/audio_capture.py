@@ -1,15 +1,16 @@
 """Audio capture module for push-to-talk functionality."""
 
-from typing import Optional, List
+import threading
 from dataclasses import dataclass
+
 import numpy as np
 import pyaudio
-import threading
 
 
 @dataclass
 class AudioDevice:
     """Represents an audio input device."""
+
     index: int
     name: str
     sample_rate: int
@@ -24,7 +25,7 @@ class AudioCapture:
         sample_rate: int = 16000,
         channels: int = 1,
         frame_size: int = 1024,
-        device_index: Optional[int] = None
+        device_index: int | None = None,
     ) -> None:
         """
         Initialize audio capture.
@@ -45,23 +46,23 @@ class AudioCapture:
         self._device_index = device_index
 
         self._pyaudio = pyaudio.PyAudio()
-        self._stream: Optional[pyaudio.Stream] = None
-        self._frames: List[bytes] = []
+        self._stream: pyaudio.Stream | None = None
+        self._frames: list[bytes] = []
         self._lock = threading.Lock()
         self._is_recording = False
-        self._start_time: Optional[float] = None
+        self._start_time: float | None = None
 
         # Verify device exists and is accessible
         try:
             if device_index is not None:
                 device_info = self._pyaudio.get_device_info_by_index(device_index)
-                if device_info['maxInputChannels'] < channels:
+                if device_info["maxInputChannels"] < channels:
                     raise RuntimeError(
                         f"Device {device_index} does not support {channels} input channels"
                     )
         except Exception as e:
             self._pyaudio.terminate()
-            raise RuntimeError(f"Audio device initialization failed: {e}")
+            raise RuntimeError(f"Audio device initialization failed: {e}") from e
 
     def start_recording(self) -> None:
         """Begin capturing audio frames to internal buffer."""
@@ -85,7 +86,7 @@ class AudioCapture:
                 input_device_index=self._device_index,
                 frames_per_buffer=self._frame_size,
                 stream_callback=callback,
-                start=False
+                start=False,
             )
 
             self._is_recording = True
@@ -113,7 +114,7 @@ class AudioCapture:
                 return np.array([], dtype=np.float32)
 
             # Concatenate all frames
-            audio_data = b''.join(self._frames)
+            audio_data = b"".join(self._frames)
 
             # Convert bytes to numpy array (already float32 from PyAudio)
             audio_array = np.frombuffer(audio_data, dtype=np.float32)
@@ -154,7 +155,7 @@ class AudioCapture:
             return num_samples / self._sample_rate
 
     @staticmethod
-    def list_devices() -> List[AudioDevice]:
+    def list_devices() -> list[AudioDevice]:
         """List available audio input devices."""
         p = pyaudio.PyAudio()
         devices = []
@@ -162,13 +163,15 @@ class AudioCapture:
         try:
             for i in range(p.get_device_count()):
                 info = p.get_device_info_by_index(i)
-                if info['maxInputChannels'] > 0:
-                    devices.append(AudioDevice(
-                        index=i,
-                        name=info['name'],
-                        sample_rate=int(info['defaultSampleRate']),
-                        channels=info['maxInputChannels']
-                    ))
+                if info["maxInputChannels"] > 0:
+                    devices.append(
+                        AudioDevice(
+                            index=i,
+                            name=info["name"],
+                            sample_rate=int(info["defaultSampleRate"]),
+                            channels=info["maxInputChannels"],
+                        )
+                    )
         finally:
             p.terminate()
 
@@ -186,7 +189,7 @@ class AudioCapture:
                 rate=16000,
                 input=True,
                 frames_per_buffer=1024,
-                start=False
+                start=False,
             )
             stream.close()
             return True
@@ -197,10 +200,10 @@ class AudioCapture:
 
     def __del__(self) -> None:
         """Clean up PyAudio resources."""
-        if hasattr(self, '_stream') and self._stream:
+        if hasattr(self, "_stream") and self._stream:
             self._stream.stop_stream()
             self._stream.close()
-        if hasattr(self, '_pyaudio'):
+        if hasattr(self, "_pyaudio"):
             self._pyaudio.terminate()
 
     def __enter__(self):

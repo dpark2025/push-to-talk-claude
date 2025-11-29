@@ -1,10 +1,10 @@
 """LogModal screen - modal displaying console logs."""
 
-from textual.screen import ModalScreen
 from textual.app import ComposeResult
-from textual.widgets import RichLog
-from textual.containers import Container
 from textual.binding import Binding
+from textual.containers import Container
+from textual.screen import ModalScreen
+from textual.widgets import RichLog
 
 from push_to_talk_claude.ui.models import LogBuffer
 

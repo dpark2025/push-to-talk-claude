@@ -3,15 +3,15 @@
 import pytest
 from textual.app import App, ComposeResult
 
-from push_to_talk_claude.ui.widgets.status_pill import StatusPill
 from push_to_talk_claude.core.recording_session import RecordingStatus
+from push_to_talk_claude.ui.widgets.status_pill import StatusPill
 
 
 class StatusPillTestApp(App):
     """Test app for StatusPill widget."""
 
     def compose(self) -> ComposeResult:
-        yield StatusPill("Recording", "🔴", "$error", RecordingStatus.RECORDING)
+        yield StatusPill("Recording", "●", "red", "$error", RecordingStatus.RECORDING)
 
 
 @pytest.mark.asyncio
@@ -52,7 +52,7 @@ async def test_status_pill_properties():
     async with StatusPillTestApp().run_test() as pilot:
         pill = pilot.app.query_one(StatusPill)
         assert pill.label_text == "Recording"
-        assert pill.emoji == "🔴"
+        assert pill.icon == "●"
         assert pill.color == "$error"
         assert pill.status == RecordingStatus.RECORDING
 

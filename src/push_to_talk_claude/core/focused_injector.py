@@ -1,7 +1,8 @@
 """Focused window injector - types text into whatever window has focus."""
 
-from pynput.keyboard import Controller, Key
 import time
+
+from pynput.keyboard import Controller, Key
 
 
 class FocusedInjector:

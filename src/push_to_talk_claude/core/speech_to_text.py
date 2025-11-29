@@ -8,9 +8,9 @@ doesn't inherit parent's FDs.
 import os
 import tempfile
 import time
-from pathlib import Path
-from typing import Optional, List
 from dataclasses import dataclass
+from pathlib import Path
+
 import numpy as np
 
 
@@ -23,11 +23,7 @@ class TranscriptionResult:
 
 
 def _transcribe_in_process(
-    audio_path: str,
-    model_name: str,
-    device: str,
-    language: Optional[str],
-    result_path: str
+    audio_path: str, model_name: str, device: str, language: str | None, result_path: str
 ) -> None:
     """Worker function that runs in a separate process.
 
@@ -35,6 +31,7 @@ def _transcribe_in_process(
     from the parent process, avoiding FD inheritance issues with Textual.
     """
     import warnings
+
     warnings.filterwarnings("ignore")
 
     # Set single-threaded mode
@@ -42,6 +39,7 @@ def _transcribe_in_process(
     os.environ["MKL_NUM_THREADS"] = "1"
 
     import torch
+
     torch.set_num_threads(1)
 
     import whisper
@@ -68,22 +66,24 @@ def _transcribe_in_process(
 
         # Write result to file
         import json
-        with open(result_path, 'w') as f:
-            json.dump({
-                "text": text,
-                "language": detected_language,
-                "confidence": confidence,
-                "error": None
-            }, f)
+
+        with open(result_path, "w") as f:
+            json.dump(
+                {
+                    "text": text,
+                    "language": detected_language,
+                    "confidence": confidence,
+                    "error": None,
+                },
+                f,
+            )
     except Exception as e:
         import json
-        with open(result_path, 'w') as f:
-            json.dump({
-                "text": "",
-                "language": language or "en",
-                "confidence": 0.0,
-                "error": str(e)
-            }, f)
+
+        with open(result_path, "w") as f:
+            json.dump(
+                {"text": "", "language": language or "en", "confidence": 0.0, "error": str(e)}, f
+            )
 
 
 class SpeechToText:
@@ -95,10 +95,7 @@ class SpeechToText:
     AVAILABLE_MODELS = ["tiny", "base", "small", "medium", "large"]
 
     def __init__(
-        self,
-        model_name: str = "small",
-        device: str = "auto",
-        language: Optional[str] = "en"
+        self, model_name: str = "small", device: str = "auto", language: str | None = "en"
     ) -> None:
         """
         Initialize Whisper transcription config.
@@ -163,10 +160,7 @@ print("Model loaded successfully")
 
         try:
             proc = subprocess.run(
-                ["python", "-c", script],
-                capture_output=True,
-                timeout=timeout_seconds,
-                text=True
+                ["python", "-c", script], capture_output=True, timeout=timeout_seconds, text=True
             )
 
             if proc.returncode == 0:
@@ -186,11 +180,7 @@ print("Model loaded successfully")
         # This method exists for API compatibility
         pass
 
-    def transcribe(
-        self,
-        audio: np.ndarray,
-        timeout_seconds: float = 30.0
-    ) -> TranscriptionResult:
+    def transcribe(self, audio: np.ndarray, timeout_seconds: float = 30.0) -> TranscriptionResult:
         """
         Transcribe audio to text using a subprocess.
 
@@ -205,26 +195,23 @@ print("Model loaded successfully")
             TimeoutError: If transcription exceeds timeout
             RuntimeError: If transcription fails
         """
-        import subprocess
         import json
+        import subprocess
 
         # Check for empty or very short audio
         if audio.size == 0 or len(audio) < 1600:  # < 0.1s at 16kHz
             return TranscriptionResult(
-                text="",
-                language=self._language or "en",
-                confidence=0.0,
-                duration_ms=0
+                text="", language=self._language or "en", confidence=0.0, duration_ms=0
             )
 
         start_time = time.time()
 
         # Create temp files for audio and result
-        with tempfile.NamedTemporaryFile(suffix='.npy', delete=False) as audio_file:
+        with tempfile.NamedTemporaryFile(suffix=".npy", delete=False) as audio_file:
             audio_path = audio_file.name
             np.save(audio_path, audio)
 
-        result_path = audio_path + '.result.json'
+        result_path = audio_path + ".result.json"
 
         try:
             # Run transcription in a completely separate Python process
@@ -261,14 +248,12 @@ no_speech_prob = result.get("no_speech_prob", 0.5)
 confidence = 1.0 - no_speech_prob
 
 with open("{result_path}", "w") as f:
-    json.dump({{"text": text, "language": detected_language, "confidence": confidence, "error": None}}, f)
+    data = {{"text": text, "language": detected_language, "confidence": confidence, "error": None}}
+    json.dump(data, f)
 '''
 
             proc = subprocess.run(
-                ["python", "-c", script],
-                capture_output=True,
-                timeout=timeout_seconds,
-                text=True
+                ["python", "-c", script], capture_output=True, timeout=timeout_seconds, text=True
             )
 
             duration_ms = int((time.time() - start_time) * 1000)
@@ -291,15 +276,15 @@ with open("{result_path}", "w") as f:
                 text=result_data["text"],
                 language=result_data["language"],
                 confidence=result_data["confidence"],
-                duration_ms=duration_ms
+                duration_ms=duration_ms,
             )
 
-        except subprocess.TimeoutExpired:
-            raise TimeoutError(f"Transcription exceeded timeout of {timeout_seconds}s")
+        except subprocess.TimeoutExpired as e:
+            raise TimeoutError(f"Transcription exceeded timeout of {timeout_seconds}s") from e
         except Exception as e:
             if "Transcription" in str(e):
                 raise
-            raise RuntimeError(f"Transcription failed: {e}")
+            raise RuntimeError(f"Transcription failed: {e}") from e
         finally:
             # Cleanup temp files
             try:
@@ -319,6 +304,6 @@ with open("{result_path}", "w") as f:
         return True
 
     @staticmethod
-    def available_models() -> List[str]:
+    def available_models() -> list[str]:
         """List available Whisper model names."""
         return SpeechToText.AVAILABLE_MODELS.copy()

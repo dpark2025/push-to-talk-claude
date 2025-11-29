@@ -1,13 +1,14 @@
 """Integration tests for TUI with recording session flow."""
 
-import pytest
 from unittest.mock import Mock
 
+import pytest
+
+from push_to_talk_claude.core.recording_session import RecordingStatus
 from push_to_talk_claude.ui.tui_app import PushToTalkTUI
-from push_to_talk_claude.ui.widgets.status_panel import StatusPanel
 from push_to_talk_claude.ui.widgets.info_panel import InfoPanel
 from push_to_talk_claude.ui.widgets.recording_timer import RecordingTimer
-from push_to_talk_claude.core.recording_session import RecordingStatus
+from push_to_talk_claude.ui.widgets.status_panel import StatusPanel
 
 
 def create_test_config():
@@ -16,9 +17,13 @@ def create_test_config():
     config.push_to_talk.hotkey = "ctrl_r"
     config.whisper.model = "tiny"
     config.injection.mode = "focused"
+    config.injection.auto_return = False
     config.tmux.session_name = "main"
     config.tmux.window_index = 0
     config.tmux.pane_index = 0
+    config.logging.save_transcripts = False
+    config.logging.transcripts_dir = "/tmp/transcripts"
+    config.ui.theme = "textual-dark"
     return config
 
 
