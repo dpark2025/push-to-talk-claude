@@ -51,6 +51,8 @@ class InfoPanel(Container):
             if self.app_info.transcript_logging != "OFF":
                 transcript_logging_widget.add_class("enabled")
             yield transcript_logging_widget
+            tts_hook_text = "ON" if self.app_info.tts_hook_enabled else "OFF"
+            yield Static(f"Speak Responses: {tts_hook_text}", id="tts-hook-info")
 
             # Startup Configuration box
             with StartupConfigBox(id="startup-config-box"):
@@ -108,6 +110,16 @@ class InfoPanel(Container):
             self.app_info.transcript_logging = "OFF"
             widget.update("Transcript Logging: OFF")
             widget.remove_class("enabled")
+
+    def update_tts_hook(self, enabled: bool) -> None:
+        """Update the TTS hook indicator.
+
+        Args:
+            enabled: Whether TTS hook is enabled
+        """
+        self.app_info.tts_hook_enabled = enabled
+        tts_hook_text = "ON" if enabled else "OFF"
+        self.query_one("#tts-hook-info", Static).update(f"Speak Responses: {tts_hook_text}")
 
     def get_timer(self) -> RecordingTimer:
         """Get the recording timer widget.
