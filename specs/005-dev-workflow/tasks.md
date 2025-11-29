@@ -56,7 +56,7 @@
 - [x] T011 [US2] Add ruff check hook with --fix for auto-fixing lint issues
 - [x] T012 [US2] Add ruff format hook for auto-formatting
 - [x] T013 [US2] Add trailing-whitespace and end-of-file-fixer hooks
-- [ ] T014 [US2] Test pre-commit hooks locally with `pre-commit run --all-files`
+- [x] T014 [US2] Test pre-commit hooks locally with `pre-commit run --all-files`
 
 **Checkpoint**: Pre-commit hooks catch and auto-fix issues locally before commit
 
@@ -91,7 +91,7 @@
 - [x] T020 [US3] Add Summary section with bullet points placeholder
 - [x] T021 [US3] Add Changes section for listing modified files/components
 - [x] T022 [US3] Add Testing section with checklist for verification steps
-- [ ] T023 [US3] Verify template appears when creating new PR
+- [x] T023 [US3] Verify template appears when creating new PR
 
 **Checkpoint**: New PRs have consistent template structure
 
@@ -109,7 +109,7 @@
 - [x] T025 [US4] Configure Python (pip) ecosystem updates
 - [x] T026 [US4] Set weekly update schedule
 - [x] T027 [US4] Configure GitHub Actions updates for workflow files
-- [ ] T028 [US4] Verify Dependabot appears in repository Security settings
+- [x] T028 [US4] Verify Dependabot appears in repository Security settings
 
 **Checkpoint**: Dependabot creates PRs for dependency updates
 
@@ -129,7 +129,7 @@
 - [x] T032 [P] [US5] Create feature request template at .github/ISSUE_TEMPLATE/feature_request.yml
 - [x] T033 [US5] Add fields: problem description, proposed solution, alternatives
 - [x] T034 [US5] Create config.yml to customize issue template chooser
-- [ ] T035 [US5] Verify templates appear when creating new issue
+- [x] T035 [US5] Verify templates appear when creating new issue
 
 **Checkpoint**: Issue templates guide users to provide complete information
 
@@ -140,10 +140,10 @@
 **Purpose**: Final validation and documentation updates
 
 - [x] T036 [P] Update README.md with pre-commit setup instructions
-- [ ] T037 [P] Add CONTRIBUTING.md with development workflow overview
-- [ ] T038 Run quickstart.md validation with manual testing
+- [x] T037 [P] Add CONTRIBUTING.md with development workflow overview
+- [x] T038 Run quickstart.md validation with manual testing
 - [x] T039 Create test PR to verify full CI pipeline works
-- [ ] T040 Verify all checkpoints from quickstart.md pass
+- [x] T040 Verify all checkpoints from quickstart.md pass
 
 ---
 
