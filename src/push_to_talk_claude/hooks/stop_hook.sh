@@ -257,30 +257,46 @@ main() {
         log_info "Short response - speaking verbatim"
         speak_text "$cleaned_response"
     else
-        # Long response: summarize first
-        log_info "Long response - summarizing"
+        # Long response: summarize using Claude
+        log_info "Long response - summarizing with Claude"
 
-        # Find project root for uv execution
-        local project_root
-        project_root=$(find_project_root)
+        local summary
+        local fallback_prefix=""
 
-        if [ $? -ne 0 ]; then
-            log_error "Could not find project root, falling back to truncation"
-            summary=$(echo "$cleaned_response" | head -c 300)
-        else
-            # Run summarizer using uv from project directory
-            local summary
-            summary=$(cd "$project_root" && echo "$cleaned_response" | uv run python -m push_to_talk_claude.hooks.summarizer --stdin 2>/dev/null)
+        # Use claude -p for AI summarization
+        if command -v claude &> /dev/null; then
+            summary=$(echo "Summarize this in 1-2 brief sentences for text-to-speech. Be concise and conversational:
+
+$cleaned_response" | claude -p 2>/dev/null)
 
             if [ $? -ne 0 ] || [ -z "$summary" ]; then
-                log_error "Summarizer failed, falling back to truncation"
-                # Fallback: truncate to first 50 words
+                log_error "Claude summarization failed, falling back to Python summarizer"
+                fallback_prefix="Claude unavailable. "
+            fi
+        else
+            log_error "claude command not found, falling back to Python summarizer"
+            fallback_prefix="Claude not found. "
+        fi
+
+        # Fallback to Python summarizer if Claude failed
+        if [ -z "$summary" ]; then
+            local project_root
+            project_root=$(find_project_root)
+
+            if [ $? -eq 0 ]; then
+                summary=$(cd "$project_root" && echo "$cleaned_response" | uv run python -m push_to_talk_claude.hooks.summarizer --stdin 2>/dev/null)
+            fi
+
+            # Final fallback: truncation
+            if [ -z "$summary" ]; then
+                log_error "Python summarizer failed, falling back to truncation"
+                fallback_prefix="Summary unavailable. "
                 summary=$(echo "$cleaned_response" | head -c 300)
             fi
         fi
 
         log_info "Summary generated (${#summary} chars)"
-        speak_text "$summary"
+        speak_text "${fallback_prefix}${summary}"
     fi
 
     log_info "Hook completed successfully"
