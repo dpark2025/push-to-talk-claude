@@ -204,6 +204,12 @@ StartupConfigBox {
     padding: 0 1;
 }
 
+#tts-hook-info {
+    color: #ffaa00;
+    text-style: bold;
+    padding: 0 1;
+}
+
 #instruction-1 {
     color: #ff6666;
     text-style: bold;

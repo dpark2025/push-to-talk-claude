@@ -238,6 +238,7 @@ class RecordingSessionManager:
 
             # Send Enter keystroke if auto_return enabled and text was injected
             if self._auto_return and sanitized:
+                time.sleep(0.1)  # Brief delay to ensure text is fully processed
                 self._tmux_injector.send_enter()
 
             with self._lock:

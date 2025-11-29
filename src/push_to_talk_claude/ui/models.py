@@ -84,6 +84,7 @@ class AppInfo:
     target_info: str
     auto_return: bool
     transcript_logging: str
+    tts_hook_enabled: bool
 
     @classmethod
     def from_config(cls, config: "Config") -> "AppInfo":
@@ -99,6 +100,11 @@ class AppInfo:
         else:
             transcript_logging = "OFF"
 
+        # Check for TTS hook flag file
+        from pathlib import Path
+        tts_flag_file = Path.home() / ".claude-voice" / "tts-hook-enabled"
+        tts_hook_enabled = tts_flag_file.exists()
+
         return cls(
             hotkey=config.push_to_talk.hotkey,
             whisper_model=config.whisper.model,
@@ -106,6 +112,7 @@ class AppInfo:
             target_info=target,
             auto_return=config.injection.auto_return,
             transcript_logging=transcript_logging,
+            tts_hook_enabled=tts_hook_enabled,
         )
 
 

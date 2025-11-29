@@ -30,6 +30,7 @@ class PushToTalkTUI(App):
     BINDINGS = [
         Binding("a", "toggle_auto_return", "Auto-Return"),
         Binding("t", "toggle_transcript_logging", "Transcript Logging"),
+        Binding("s", "toggle_tts_hook", "Speak Responses"),
         Binding("l", "toggle_logs", "Console Logs"),
         Binding("q", "quit", "Quit"),
         # Rename default command palette from "Palette" to "Options"
@@ -117,6 +118,18 @@ class PushToTalkTUI(App):
             else:
                 self.notify("Transcript Logging: OFF", timeout=2)
                 self.log_buffer.append("INFO", "Transcript logging disabled")
+
+    def action_toggle_tts_hook(self) -> None:
+        """Toggle TTS hook setting via app controller."""
+        if self.app_controller:
+            new_value = self.app_controller.toggle_tts_hook()
+            # Update InfoPanel indicator
+            info_panel = self.query_one(InfoPanel)
+            info_panel.update_tts_hook(new_value)
+            # Show notification
+            status_text = "ON" if new_value else "OFF"
+            self.notify(f"Speak Responses: {status_text}", timeout=2)
+            self.log_buffer.append("INFO", f"TTS hook toggled to: {status_text}")
 
     def handle_state_change(self, status: RecordingStatus) -> None:
         """Handle recording state change from background thread.

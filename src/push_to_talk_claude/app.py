@@ -142,13 +142,14 @@ class App:
         model_name = self.config.whisper.model
         logger.info(f"Preloading Whisper model '{model_name}'...")
 
+        # Show console message before TUI starts (user sees this while waiting)
+        from rich.console import Console
+        console = Console()
+        console.print(f"[dim]Loading Whisper model '{model_name}'... (first run downloads ~244MB)[/dim]")
+
         # Log to TUI buffer if available (will show when TUI starts)
         if self.tui:
             self.tui.show_model_loading()
-
-        # Show console message for non-TUI mode
-        if not self._use_tui:
-            self.notifications.info(f"Loading Whisper model '{model_name}' (first run may download)...")
 
         success, message = self.speech_to_text.preload_model()
 
@@ -434,6 +435,24 @@ class App:
         self.config.logging.save_transcripts = not self.config.logging.save_transcripts
         full_path = str(Path(self.config.logging.transcripts_dir).resolve())
         return (self.config.logging.save_transcripts, full_path)
+
+    def toggle_tts_hook(self) -> bool:
+        """Toggle TTS hook by creating/deleting flag file.
+
+        Returns:
+            New TTS hook enabled value
+        """
+        tts_flag_file = Path.home() / ".claude-voice" / "tts-hook-enabled"
+
+        if tts_flag_file.exists():
+            # Disable by deleting flag file
+            tts_flag_file.unlink()
+            return False
+        else:
+            # Enable by creating flag file
+            tts_flag_file.parent.mkdir(parents=True, exist_ok=True)
+            tts_flag_file.touch()
+            return True
 
     def _setup_signal_handlers(self) -> None:
         """Setup SIGINT/SIGTERM handlers for graceful shutdown."""
