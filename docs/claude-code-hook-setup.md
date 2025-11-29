@@ -28,7 +28,6 @@ This feature adds Text-to-Speech (TTS) responses to Claude Code by hooking into 
 - macOS only (requires `say` command)
 - Manual configuration required
 - May break with Claude Code updates
-- Requires running push-to-talk-claude TUI to enable/disable
 
 ---
 
@@ -228,7 +227,33 @@ tts:
 
 ## Usage
 
-### Enable TTS Hook
+### Option 1: Using the `/tts` Slash Command (Recommended)
+
+The easiest way to control TTS is with the `/tts` slash command directly in Claude Code.
+
+**Installation:**
+
+Copy the command file to your Claude commands directory:
+```bash
+# For project-specific use (recommended)
+cp /path/to/push-to-talk-claude/.claude/commands/tts.md .claude/commands/
+
+# Or for global use across all projects
+cp /path/to/push-to-talk-claude/.claude/commands/tts.md ~/.claude/commands/
+```
+
+**Usage:**
+```
+/tts on       # Enable TTS hook
+/tts off      # Disable TTS hook
+/tts toggle   # Toggle TTS hook
+/tts status   # Check current status (default)
+/tts          # Same as status
+```
+
+After enabling, Claude's responses will be spoken aloud!
+
+### Option 2: Using the TUI
 
 1. **Start the push-to-talk-claude TUI:**
    ```bash
@@ -247,24 +272,23 @@ tts:
 
 4. Ask Claude a question - the response will be spoken aloud!
 
-### Disable TTS Hook
+Press `s` key again in the TUI to disable.
 
-Press `s` key again in the TUI to disable:
-- Status panel shows "TTS: Disabled"
-- Hook flag file removed
-- Claude responses no longer spoken
+### Option 3: Manual Shell Commands
 
-### Toggle Without TUI
-
-**Manually enable:**
+**Enable:**
 ```bash
-mkdir -p ~/.claude-voice
-touch ~/.claude-voice/tts-hook-enabled
+mkdir -p ~/.claude-voice && touch ~/.claude-voice/tts-hook-enabled
 ```
 
-**Manually disable:**
+**Disable:**
 ```bash
-rm ~/.claude-voice/tts-hook-enabled
+rm -f ~/.claude-voice/tts-hook-enabled
+```
+
+**Check status:**
+```bash
+[ -f ~/.claude-voice/tts-hook-enabled ] && echo "TTS: enabled" || echo "TTS: disabled"
 ```
 
 ---
@@ -537,6 +561,7 @@ If running multiple Claude sessions, each will trigger the hook. The toggle flag
 | `~/.claude-voice/config.yaml` | TTS voice/rate settings |
 | `~/.claude-voice/tts-hook-enabled` | Flag file (presence enables hook) |
 | `~/.claude-voice/hook.log` | Debug logs (when `DEBUG=1`) |
+| `.claude/commands/tts.md` | Slash command for TTS control |
 | `stop_hook.sh` | Bash script invoked by Claude Code |
 | `summarizer.py` | Python module for long response summarization |
 
