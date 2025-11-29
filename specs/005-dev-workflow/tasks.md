@@ -38,7 +38,7 @@
 - [x] T006 [US1] Add ruff format --check step for formatting in .github/workflows/ci.yml
 - [x] T007 [US1] Add pytest step for running tests in .github/workflows/ci.yml
 - [x] T008 [US1] Add uv dependency caching for faster builds in .github/workflows/ci.yml
-- [ ] T009 [US1] Verify CI workflow syntax with `act` or by creating test PR
+- [x] T009 [US1] Verify CI workflow syntax with `act` or by creating test PR
 
 **Checkpoint**: CI workflow runs on PRs and catches lint/format/test issues
 
@@ -142,7 +142,7 @@
 - [x] T036 [P] Update README.md with pre-commit setup instructions
 - [ ] T037 [P] Add CONTRIBUTING.md with development workflow overview
 - [ ] T038 Run quickstart.md validation with manual testing
-- [ ] T039 Create test PR to verify full CI pipeline works
+- [x] T039 Create test PR to verify full CI pipeline works
 - [ ] T040 Verify all checkpoints from quickstart.md pass
 
 ---
