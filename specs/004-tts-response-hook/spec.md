@@ -2,7 +2,8 @@
 
 **Feature Branch**: `004-tts-response-hook`
 **Created**: 2025-11-28
-**Status**: Draft
+**Completed**: 2025-11-28
+**Status**: Completed
 **Input**: User description: "Claude Code Stop hook for TTS responses - speaks short responses directly using macOS say command, summarizes longer responses before speaking, includes runtime toggle to enable/disable"
 
 ## Overview
