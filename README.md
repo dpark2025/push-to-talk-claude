@@ -9,6 +9,7 @@ Hands-free voice input for Claude Code on macOS.
 - **Fast Transcription**: MPS-accelerated on Apple Silicon (~0.05s per transcription after warmup)
 - **Flexible Injection**: Type into focused window (default) or send to specific tmux pane
 - **Beautiful TUI**: Textual-based terminal UI with live recording timer, status indicators, and log viewer
+- **TTS Response Hook**: Optional Claude Code integration to hear Claude's responses aloud ([setup guide](docs/claude-code-hook-setup.md))
 - **Customizable**: Configure hotkey, Whisper model, and injection target
 
 ## Quick Start
@@ -100,15 +101,15 @@ If you prefer to always send text to a specific tmux pane (regardless of focus),
    uv run claude-voice
    ```
 
-4. Position windows side-by-side so you can see both:
+4. Hold the hotkey to speak - text injects into the tmux pane regardless of focus.
+
+5. **(Optional)** Position windows side-by-side if you want to monitor recording status:
    ```
    ┌─────────────────────────────┬─────────────────────────────┐
    │   Claude Code (tmux)        │   Voice Interface           │
    │   Keep your focus here      │   Shows recording status    │
    └─────────────────────────────┴─────────────────────────────┘
    ```
-
-5. Hold the hotkey to speak - text injects into the tmux pane regardless of focus.
 
 ### TUI Interface
 
@@ -123,10 +124,23 @@ The voice interface displays a modern terminal UI with:
 | Key | Action |
 |-----|--------|
 | `L` | Toggle log viewer (shows recent activity) |
+| `S` | Toggle TTS hook (speaks Claude responses aloud) |
 | `Q` | Quit the application |
 | `Ctrl+\` | Open options/command palette |
 
 The TUI uses the Catppuccin Mocha theme for a comfortable dark mode experience.
+
+### TTS Response Hook (Experimental)
+
+The TUI includes an experimental feature that speaks Claude's responses aloud using macOS TTS. When enabled:
+- Claude's responses are automatically spoken after each reply
+- Long responses are intelligently summarized
+- Code blocks are filtered out (not spoken)
+- Toggle on/off with the `S` key
+
+**⚠️ Requires manual setup** - see [Claude Code Hook Setup Guide](docs/claude-code-hook-setup.md) for detailed instructions.
+
+**Note:** This is a brittle integration that depends on Claude Code's internal hook system and may break with future updates.
 
 ## Configuration
 
