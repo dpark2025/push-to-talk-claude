@@ -14,11 +14,11 @@ class InputSanitizer:
 
         Args:
             max_length: Maximum allowed length of sanitized text.
-            escape_shell: Whether to escape shell metacharacters (True for tmux, False for focused mode).
+            escape_shell: Escape shell metacharacters (tmux=True, focused=False).
         """
         self.max_length = max_length
         self.escape_shell = escape_shell
-        self._ansi_pattern = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]')
+        self._ansi_pattern = re.compile(r"\x1b\[[0-9;]*[a-zA-Z]")
 
     def sanitize(self, text: str) -> str:
         """
@@ -41,18 +41,18 @@ class InputSanitizer:
             return ""
 
         # Step 1: Remove ANSI escape sequences
-        result = self._ansi_pattern.sub('', text)
+        result = self._ansi_pattern.sub("", text)
 
         # Step 2: Replace newlines with spaces
-        result = result.replace('\n', ' ').replace('\r', ' ')
+        result = result.replace("\n", " ").replace("\r", " ")
 
         # Step 3: Escape shell metacharacters (only for tmux mode)
         if self.escape_shell:
             for char in self.SHELL_METACHARACTERS:
-                result = result.replace(char, f'\\{char}')
+                result = result.replace(char, f"\\{char}")
 
         # Step 4: Truncate to max_length
-        result = result[:self.max_length]
+        result = result[: self.max_length]
 
         # Step 5: Strip leading/trailing whitespace
         result = result.strip()

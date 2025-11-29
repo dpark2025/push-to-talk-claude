@@ -1,17 +1,19 @@
 """Recording session state machine for push-to-talk interactions."""
 
-from typing import Optional, Callable
-from enum import Enum
-from dataclasses import dataclass, field
-from datetime import datetime
-import uuid
 import threading
 import time
+import uuid
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from datetime import datetime
+from enum import Enum
+
 import numpy as np
 
 
 class RecordingStatus(Enum):
     """Status of a recording session."""
+
     IDLE = "idle"
     RECORDING = "recording"
     TRANSCRIBING = "transcribing"
@@ -25,13 +27,14 @@ class RecordingStatus(Enum):
 @dataclass
 class RecordingSession:
     """A single push-to-talk interaction."""
+
     id: str = field(default_factory=lambda: str(uuid.uuid4()))
-    started_at: Optional[datetime] = None
-    ended_at: Optional[datetime] = None
+    started_at: datetime | None = None
+    ended_at: datetime | None = None
     duration_ms: int = 0
-    transcription: Optional[str] = None
+    transcription: str | None = None
     status: RecordingStatus = RecordingStatus.IDLE
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class RecordingSessionManager:
@@ -48,10 +51,10 @@ class RecordingSessionManager:
         speech_to_text,
         tmux_injector,
         sanitizer,
-        on_state_change: Optional[Callable[[RecordingStatus], None]] = None,
-        on_transcription: Optional[Callable[[str], None]] = None,
-        on_error: Optional[Callable[[str], None]] = None,
-        on_skipped: Optional[Callable[[str], None]] = None,
+        on_state_change: Callable[[RecordingStatus], None] | None = None,
+        on_transcription: Callable[[str], None] | None = None,
+        on_error: Callable[[str], None] | None = None,
+        on_skipped: Callable[[str], None] | None = None,
     ) -> None:
         """Initialize session manager with required components."""
         self._audio_capture = audio_capture
@@ -63,13 +66,13 @@ class RecordingSessionManager:
         self._on_error = on_error
         self._on_skipped = on_skipped
 
-        self._session: Optional[RecordingSession] = None
+        self._session: RecordingSession | None = None
         self._lock = threading.Lock()
-        self._max_duration_timer: Optional[threading.Timer] = None
+        self._max_duration_timer: threading.Timer | None = None
         self._auto_return: bool = False
 
     @property
-    def current_session(self) -> Optional[RecordingSession]:
+    def current_session(self) -> RecordingSession | None:
         """Get current session if any."""
         with self._lock:
             return self._session
@@ -99,15 +102,13 @@ class RecordingSessionManager:
                 return
 
             self._session = RecordingSession(
-                started_at=datetime.now(),
-                status=RecordingStatus.RECORDING
+                started_at=datetime.now(), status=RecordingStatus.RECORDING
             )
 
         self._audio_capture.start_recording()
 
         self._max_duration_timer = threading.Timer(
-            self.MAX_RECORDING_DURATION,
-            self._check_max_duration
+            self.MAX_RECORDING_DURATION, self._check_max_duration
         )
         self._max_duration_timer.start()
 
@@ -133,11 +134,7 @@ class RecordingSessionManager:
 
         self._notify_state_change(RecordingStatus.TRANSCRIBING)
 
-        thread = threading.Thread(
-            target=self._transcribe_and_inject,
-            args=(audio,),
-            daemon=True
-        )
+        thread = threading.Thread(target=self._transcribe_and_inject, args=(audio,), daemon=True)
         thread.start()
 
     def cancel(self) -> None:
@@ -176,7 +173,7 @@ class RecordingSessionManager:
                 return
 
             # Check if audio is too quiet (no speech detected)
-            rms = np.sqrt(np.mean(audio ** 2))
+            rms = np.sqrt(np.mean(audio**2))
             if rms < self.MIN_AUDIO_RMS:
                 with self._lock:
                     if self._session:
@@ -190,7 +187,8 @@ class RecordingSessionManager:
             def transcribe():
                 try:
                     result = self._speech_to_text.transcribe(audio)
-                    transcription_result[0] = result.text if hasattr(result, 'text') else str(result)
+                    text = result.text if hasattr(result, "text") else str(result)
+                    transcription_result[0] = text
                 except Exception as e:
                     transcription_error[0] = e
 

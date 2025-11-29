@@ -2,17 +2,16 @@
 
 import subprocess
 import threading
-from typing import Optional
 
 
 class AudioFeedback:
     """Provide audio feedback using macOS system sounds."""
 
     # macOS system sounds (in /System/Library/Sounds/)
-    SOUND_START = "Tink"      # Light tap for recording start
-    SOUND_STOP = "Pop"        # Pop for recording stop
-    SOUND_ERROR = "Basso"     # Bass tone for errors
-    SOUND_SUCCESS = "Glass"   # Glass sound for success
+    SOUND_START = "Tink"  # Light tap for recording start
+    SOUND_STOP = "Pop"  # Pop for recording stop
+    SOUND_ERROR = "Basso"  # Bass tone for errors
+    SOUND_SUCCESS = "Glass"  # Glass sound for success
 
     def __init__(self, enabled: bool = True) -> None:
         """
@@ -22,7 +21,7 @@ class AudioFeedback:
             enabled: Whether audio feedback is enabled
         """
         self._enabled = enabled
-        self._current_process: Optional[subprocess.Popen] = None
+        self._current_process: subprocess.Popen | None = None
         self._lock = threading.Lock()
 
     @property

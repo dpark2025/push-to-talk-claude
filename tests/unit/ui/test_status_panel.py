@@ -3,9 +3,9 @@
 import pytest
 from textual.app import App, ComposeResult
 
+from push_to_talk_claude.core.recording_session import RecordingStatus
 from push_to_talk_claude.ui.widgets.status_panel import StatusPanel
 from push_to_talk_claude.ui.widgets.status_pill import StatusPill
-from push_to_talk_claude.core.recording_session import RecordingStatus
 
 
 class StatusPanelTestApp(App):
@@ -19,7 +19,7 @@ class StatusPanelTestApp(App):
 async def test_status_panel_creates_pills():
     """Test that StatusPanel creates all status pills."""
     async with StatusPanelTestApp().run_test() as pilot:
-        panel = pilot.app.query_one(StatusPanel)
+        _ = pilot.app.query_one(StatusPanel)  # Verify panel exists
         pills = pilot.app.query(StatusPill)
         assert len(list(pills)) == 6
 

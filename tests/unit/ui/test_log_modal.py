@@ -4,8 +4,8 @@ import pytest
 from textual.app import App, ComposeResult
 from textual.widgets import RichLog
 
-from push_to_talk_claude.ui.widgets.log_modal import LogModal
 from push_to_talk_claude.ui.models import LogBuffer
+from push_to_talk_claude.ui.widgets.log_modal import LogModal
 
 
 class LogModalTestApp(App):

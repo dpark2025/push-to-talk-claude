@@ -1,14 +1,24 @@
-from typing import Optional, List
-from dataclasses import dataclass, asdict
-from pathlib import Path
-import yaml
 import shutil
+from dataclasses import asdict, dataclass
+from pathlib import Path
 
+import yaml
 
 SUPPORTED_HOTKEYS = {
-    "ctrl_r", "ctrl_l", "alt_r", "alt_l",
-    "cmd_r", "cmd_l", "f13", "f14", "f15",
-    "f16", "f17", "f18", "f19", "f20"
+    "ctrl_r",
+    "ctrl_l",
+    "alt_r",
+    "alt_l",
+    "cmd_r",
+    "cmd_l",
+    "f13",
+    "f14",
+    "f15",
+    "f16",
+    "f17",
+    "f18",
+    "f19",
+    "f20",
 }
 
 SUPPORTED_WHISPER_MODELS = {"tiny", "base", "small", "medium", "large"}
@@ -28,7 +38,7 @@ class PushToTalkConfig:
 class WhisperConfig:
     model: str = "small"
     device: str = "auto"
-    language: Optional[str] = "en"
+    language: str | None = "en"
 
 
 @dataclass
@@ -39,16 +49,16 @@ class InjectionConfig:
 
 @dataclass
 class TmuxConfig:
-    session_name: Optional[str] = None
-    window_index: Optional[int] = None
-    pane_index: Optional[int] = None
+    session_name: str | None = None
+    window_index: int | None = None
+    pane_index: int | None = None
     auto_detect: bool = True
 
 
 @dataclass
 class TTSConfig:
     enabled: bool = True
-    voice: Optional[str] = None
+    voice: str | None = None
     rate: int = 200
     max_length: int = 500
 
@@ -103,7 +113,7 @@ class Config:
         return config_path
 
     @classmethod
-    def load(cls, path: Optional[Path] = None) -> "Config":
+    def load(cls, path: Path | None = None) -> "Config":
         """Load config from file or use defaults."""
         if path is None:
             path = cls.ensure_config_exists()
@@ -111,21 +121,21 @@ class Config:
         if not path.exists():
             return cls.default()
 
-        with open(path, 'r') as f:
+        with open(path) as f:
             data = yaml.safe_load(f)
 
         if data is None:
             return cls.default()
 
         return cls(
-            push_to_talk=PushToTalkConfig(**data.get('push_to_talk', {})),
-            whisper=WhisperConfig(**data.get('whisper', {})),
-            injection=InjectionConfig(**data.get('injection', {})),
-            tmux=TmuxConfig(**data.get('tmux', {})),
-            tts=TTSConfig(**data.get('tts', {})),
-            security=SecurityConfig(**data.get('security', {})),
-            logging=LoggingConfig(**data.get('logging', {})),
-            ui=UIConfig(**data.get('ui', {}))
+            push_to_talk=PushToTalkConfig(**data.get("push_to_talk", {})),
+            whisper=WhisperConfig(**data.get("whisper", {})),
+            injection=InjectionConfig(**data.get("injection", {})),
+            tmux=TmuxConfig(**data.get("tmux", {})),
+            tts=TTSConfig(**data.get("tts", {})),
+            security=SecurityConfig(**data.get("security", {})),
+            logging=LoggingConfig(**data.get("logging", {})),
+            ui=UIConfig(**data.get("ui", {})),
         )
 
     @classmethod
@@ -139,7 +149,7 @@ class Config:
             tts=TTSConfig(),
             security=SecurityConfig(),
             logging=LoggingConfig(),
-            ui=UIConfig()
+            ui=UIConfig(),
         )
 
     def save(self, path: Path) -> None:
@@ -147,20 +157,20 @@ class Config:
         path.parent.mkdir(parents=True, exist_ok=True)
 
         data = {
-            'push_to_talk': asdict(self.push_to_talk),
-            'whisper': asdict(self.whisper),
-            'injection': asdict(self.injection),
-            'tmux': asdict(self.tmux),
-            'tts': asdict(self.tts),
-            'security': asdict(self.security),
-            'logging': asdict(self.logging),
-            'ui': asdict(self.ui)
+            "push_to_talk": asdict(self.push_to_talk),
+            "whisper": asdict(self.whisper),
+            "injection": asdict(self.injection),
+            "tmux": asdict(self.tmux),
+            "tts": asdict(self.tts),
+            "security": asdict(self.security),
+            "logging": asdict(self.logging),
+            "ui": asdict(self.ui),
         }
 
-        with open(path, 'w') as f:
+        with open(path, "w") as f:
             yaml.safe_dump(data, f, default_flow_style=False, sort_keys=False)
 
-    def validate(self) -> List[str]:
+    def validate(self) -> list[str]:
         """Validate config values. Returns list of error messages (empty if valid)."""
         errors = []
 
@@ -183,10 +193,7 @@ class Config:
             )
 
         if not (100 <= self.tts.rate <= 400):
-            errors.append(
-                f"Invalid TTS rate {self.tts.rate}. "
-                f"Rate must be between 100 and 400"
-            )
+            errors.append(f"Invalid TTS rate {self.tts.rate}. Rate must be between 100 and 400")
 
         if not (100 <= self.security.max_input_length <= 5000):
             errors.append(

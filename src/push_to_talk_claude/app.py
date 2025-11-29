@@ -1,27 +1,23 @@
 """Main application orchestrator for push-to-talk voice interface."""
 
-from typing import Optional
-from pathlib import Path
-from datetime import datetime
-import signal
-import sys
 import logging
-import threading
+import signal
+from pathlib import Path
 
-from .core.keyboard_monitor import KeyboardMonitor
 from .core.audio_capture import AudioCapture
+from .core.focused_injector import FocusedInjector
+from .core.keyboard_monitor import KeyboardMonitor
+from .core.recording_session import RecordingSessionManager, RecordingStatus
 from .core.speech_to_text import SpeechToText
 from .core.tmux_injector import TmuxInjector
-from .core.focused_injector import FocusedInjector
-from .core.recording_session import RecordingSessionManager, RecordingStatus
-from .utils.config import Config
-from .utils.sanitizer import InputSanitizer
-from .utils.permissions import check_all_permissions, PermissionState
-from .utils.session_detector import SessionDetector
+from .ui.audio_feedback import AudioFeedback
 from .ui.indicators import RecordingIndicator
 from .ui.notifications import NotificationManager
-from .ui.audio_feedback import AudioFeedback
 from .ui.tui_app import PushToTalkTUI
+from .utils.config import Config
+from .utils.permissions import PermissionState, check_all_permissions
+from .utils.sanitizer import InputSanitizer
+from .utils.session_detector import SessionDetector
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +25,7 @@ logger = logging.getLogger(__name__)
 class App:
     """Main application orchestrator for push-to-talk voice interface."""
 
-    def __init__(self, config: Optional[Config] = None) -> None:
+    def __init__(self, config: Config | None = None) -> None:
         """
         Initialize the application.
 
@@ -47,7 +43,7 @@ class App:
                 logger.error(f"Config error: {error}")
             raise ValueError(f"Invalid configuration: {errors[0]}")
 
-        # Utilities - no shell escaping needed (tmux send-keys handles it, focused mode types directly)
+        # No shell escaping needed (tmux send-keys handles it, focused mode types directly)
         self.sanitizer = InputSanitizer(self.config.security.max_input_length, escape_shell=False)
         self.session_detector = SessionDetector()
 
@@ -57,15 +53,15 @@ class App:
         self.audio_feedback = AudioFeedback(self.config.push_to_talk.audio_feedback)
 
         # TUI (initialized after session_manager is available)
-        self.tui: Optional[PushToTalkTUI] = None
+        self.tui: PushToTalkTUI | None = None
         self._use_tui = True  # Flag to enable/disable TUI mode
 
         # Core components (initialized later)
-        self.keyboard_monitor: Optional[KeyboardMonitor] = None
-        self.audio_capture: Optional[AudioCapture] = None
-        self.speech_to_text: Optional[SpeechToText] = None
+        self.keyboard_monitor: KeyboardMonitor | None = None
+        self.audio_capture: AudioCapture | None = None
+        self.speech_to_text: SpeechToText | None = None
         self.injector = None  # FocusedInjector or TmuxInjector based on config
-        self.session_manager: Optional[RecordingSessionManager] = None
+        self.session_manager: RecordingSessionManager | None = None
 
     def _initialize_components(self) -> None:
         """Initialize all core components."""
@@ -77,7 +73,7 @@ class App:
         self.speech_to_text = SpeechToText(
             model_name=self.config.whisper.model,
             device=self.config.whisper.device,
-            language=self.config.whisper.language
+            language=self.config.whisper.language,
         )
 
         # Setup injector based on config
@@ -92,7 +88,7 @@ class App:
                     session_name=self.config.tmux.session_name,
                     window_index=self.config.tmux.window_index,
                     pane_index=self.config.tmux.pane_index,
-                    auto_detect=False
+                    auto_detect=False,
                 )
             else:
                 # Auto-detect Claude session
@@ -102,7 +98,7 @@ class App:
                         session_name=claude_session.session_name,
                         window_index=claude_session.window_index,
                         pane_index=claude_session.pane_index,
-                        auto_detect=False
+                        auto_detect=False,
                     )
                 else:
                     self.injector = TmuxInjector(auto_detect=True)
@@ -116,7 +112,7 @@ class App:
             on_state_change=self._on_state_change,
             on_transcription=self._on_transcription,
             on_error=self._on_error,
-            on_skipped=self._on_skipped
+            on_skipped=self._on_skipped,
         )
 
         # Initialize auto_return from config
@@ -126,15 +122,13 @@ class App:
         self.keyboard_monitor = KeyboardMonitor(
             hotkey=self.config.push_to_talk.hotkey,
             on_press=self._on_hotkey_press,
-            on_release=self._on_hotkey_release
+            on_release=self._on_hotkey_release,
         )
 
         # Initialize TUI if enabled
         if self._use_tui:
             self.tui = PushToTalkTUI(
-                config=self.config,
-                session_manager=self.session_manager,
-                app_controller=self
+                config=self.config, session_manager=self.session_manager, app_controller=self
             )
 
     def _preload_whisper_model(self) -> None:
@@ -144,8 +138,10 @@ class App:
 
         # Show console message before TUI starts (user sees this while waiting)
         from rich.console import Console
+
         console = Console()
-        console.print(f"[dim]Loading Whisper model '{model_name}'... (first run downloads ~244MB)[/dim]")
+        msg = f"Loading Whisper model '{model_name}'... (first run downloads ~244MB)"
+        console.print(f"[dim]{msg}[/dim]")
 
         # Log to TUI buffer if available (will show when TUI starts)
         if self.tui:
@@ -164,7 +160,8 @@ class App:
             if self.tui:
                 self.tui.show_model_error(message)
             if not self._use_tui:
-                self.notifications.warning(f"Model preload failed: {message} (will retry on first use)")
+                warn = f"Model preload failed: {message} (will retry on first use)"
+                self.notifications.warning(warn)
 
     def check_prerequisites(self) -> bool:
         """
@@ -193,19 +190,21 @@ class App:
             # Check tmux available
             if not TmuxInjector.is_tmux_available():
                 logger.error("tmux not available")
-                self.notifications.error("tmux is required but not installed. Run: brew install tmux")
+                self.notifications.error("tmux not installed. Run: brew install tmux")
                 return False
 
             # Check for Claude session
             if not self.session_detector.is_tmux_running():
                 logger.warning("tmux server not running")
-                self.notifications.warning("tmux server not running. Start with: tmux new-session -s claude 'claude'")
+                msg = "tmux server not running. Start: tmux new-session -s claude 'claude'"
+                self.notifications.warning(msg)
                 return False
 
             claude_session = self.session_detector.get_best_target()
             if not claude_session:
                 logger.warning("No Claude session found")
-                self.notifications.warning("No Claude Code session found. Start with: tmux new-session -s claude 'claude'")
+                msg = "No Claude session found. Start: tmux new-session -s claude 'claude'"
+                self.notifications.warning(msg)
                 return False
 
             logger.info(f"Found Claude session: {claude_session.target_string}")
@@ -244,7 +243,7 @@ class App:
             self.notifications.startup_banner(
                 hotkey=self.config.push_to_talk.hotkey,
                 model=self.config.whisper.model,
-                injection_mode=self.config.injection.mode
+                injection_mode=self.config.injection.mode,
             )
 
     def stop(self) -> None:
@@ -295,6 +294,7 @@ class App:
                     except AttributeError:
                         # signal.pause() not available on Windows
                         import time
+
                         time.sleep(0.1)
 
             return 0
@@ -379,13 +379,14 @@ class App:
         """Save transcription to file."""
         try:
             import time
+
             transcripts_dir = Path(self.config.logging.transcripts_dir)
             transcripts_dir.mkdir(parents=True, exist_ok=True)
 
             epoch_ms = int(time.time() * 1000)
             filename = transcripts_dir / f"transcript_{epoch_ms}.txt"
 
-            with open(filename, 'w') as f:
+            with open(filename, "w") as f:
                 f.write(f"Timestamp: {epoch_ms}\n")
                 f.write(f"Text: {text}\n")
 
@@ -456,6 +457,7 @@ class App:
 
     def _setup_signal_handlers(self) -> None:
         """Setup SIGINT/SIGTERM handlers for graceful shutdown."""
+
         def signal_handler(signum, frame):
             logger.info(f"Received signal {signum}")
             self._shutdown_requested = True

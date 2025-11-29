@@ -8,39 +8,29 @@ from pathlib import Path
 def main() -> int:
     """Main entry point for claude-voice command."""
     parser = argparse.ArgumentParser(
-        prog="claude-voice",
-        description="Push-to-talk voice interface for Claude Code"
+        prog="claude-voice", description="Push-to-talk voice interface for Claude Code"
     )
     parser.add_argument(
-        "--config", "-c",
+        "--config",
+        "-c",
         type=Path,
-        help="Path to config file (default: ~/.claude-voice/config.yaml)"
+        help="Path to config file (default: ~/.claude-voice/config.yaml)",
     )
-    parser.add_argument(
-        "--check",
-        action="store_true",
-        help="Check prerequisites and exit"
-    )
-    parser.add_argument(
-        "--debug",
-        action="store_true",
-        help="Enable debug logging"
-    )
-    parser.add_argument(
-        "--version", "-v",
-        action="store_true",
-        help="Show version and exit"
-    )
+    parser.add_argument("--check", action="store_true", help="Check prerequisites and exit")
+    parser.add_argument("--debug", action="store_true", help="Enable debug logging")
+    parser.add_argument("--version", "-v", action="store_true", help="Show version and exit")
 
     args = parser.parse_args()
 
     if args.version:
         from . import __version__
+
         print(f"claude-voice {__version__}")
         return 0
 
     # Load config
     from .utils.config import Config
+
     if args.config:
         config = Config.load(args.config)
     else:
@@ -49,6 +39,7 @@ def main() -> int:
     # Set debug logging if requested
     if args.debug:
         import logging
+
         logging.basicConfig(level=logging.DEBUG)
         config.logging.level = "DEBUG"
 
@@ -58,20 +49,22 @@ def main() -> int:
 
     # Run main app
     from .app import App
+
     app = App(config)
     return app.run()
 
 
 def check_prerequisites(config) -> int:
     """Check all prerequisites and print status."""
+    from rich.console import Console
+
     from .utils.permissions import (
-        check_microphone_permission,
+        PermissionState,
         check_accessibility_permission,
+        check_microphone_permission,
         check_tmux_available,
-        PermissionState
     )
     from .utils.session_detector import SessionDetector
-    from rich.console import Console
 
     console = Console()
     all_ok = True

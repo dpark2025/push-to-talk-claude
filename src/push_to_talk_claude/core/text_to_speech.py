@@ -1,16 +1,12 @@
-from typing import Optional, List
-import subprocess
 import shutil
+import subprocess
 import threading
+
 
 class TextToSpeech:
     """Convert text to speech using macOS say command."""
 
-    def __init__(
-        self,
-        voice: Optional[str] = None,
-        rate: int = 200
-    ) -> None:
+    def __init__(self, voice: str | None = None, rate: int = 200) -> None:
         """
         Initialize TTS engine.
 
@@ -30,7 +26,7 @@ class TextToSpeech:
 
         self._voice = voice
         self._rate = rate
-        self._process: Optional[subprocess.Popen] = None
+        self._process: subprocess.Popen | None = None
         self._lock = threading.Lock()
 
     def speak(self, text: str, async_mode: bool = True) -> None:
@@ -83,7 +79,7 @@ class TextToSpeech:
             return False
 
     @property
-    def voice(self) -> Optional[str]:
+    def voice(self) -> str | None:
         """Current voice name."""
         return self._voice
 
@@ -93,18 +89,13 @@ class TextToSpeech:
         return self._rate
 
     @staticmethod
-    def list_voices() -> List[str]:
+    def list_voices() -> list[str]:
         """List available macOS voices."""
         try:
-            result = subprocess.run(
-                ["say", "-v", "?"],
-                capture_output=True,
-                text=True,
-                check=True
-            )
+            result = subprocess.run(["say", "-v", "?"], capture_output=True, text=True, check=True)
 
             voices = []
-            for line in result.stdout.strip().split('\n'):
+            for line in result.stdout.strip().split("\n"):
                 # Format: "Voice_Name language_code # description"
                 parts = line.split()
                 if parts:

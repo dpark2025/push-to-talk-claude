@@ -1,12 +1,11 @@
-from typing import Optional, Callable
-from pathlib import Path
-import json
 import logging
+from collections.abc import Callable
 
-from .response_parser import ResponseParser, ResponseType
 from ..core.text_to_speech import TextToSpeech
+from .response_parser import ResponseParser
 
 logger = logging.getLogger(__name__)
+
 
 class HookHandler:
     """Handle Claude Code hook events for TTS."""
@@ -16,7 +15,7 @@ class HookHandler:
         tts: TextToSpeech,
         parser: ResponseParser,
         enabled: bool = True,
-        on_speak: Optional[Callable[[str], None]] = None,
+        on_speak: Callable[[str], None] | None = None,
     ) -> None:
         """
         Initialize hook handler.

@@ -48,7 +48,8 @@ def test_recording_indicator():
 
     # Test complete with long text
     print("5. Testing complete indicator (long text - should truncate)...")
-    indicator.show_complete("This is a much longer transcription that should be truncated at fifty characters")
+    long_text = "This is a much longer transcription that should be truncated at 50 chars"
+    indicator.show_complete(long_text)
     time.sleep(1)
 
     # Test error

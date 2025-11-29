@@ -1,7 +1,7 @@
 """InfoPanel widget - left panel displaying app configuration and instructions."""
 
-from textual.containers import Container, Vertical
 from textual.app import ComposeResult
+from textual.containers import Container, Vertical
 from textual.widgets import Static
 
 from push_to_talk_claude.ui.models import AppInfo
@@ -10,11 +10,13 @@ from push_to_talk_claude.ui.widgets.recording_timer import RecordingTimer
 
 class StartupConfigBox(Container):
     """Bordered container for startup configuration items."""
+
     pass
 
 
 class BottomSection(Vertical):
     """Container for bottom section items."""
+
     pass
 
 
@@ -46,7 +48,7 @@ class InfoPanel(Container):
             yield Static(f"Auto-Return: {auto_return_text}", id="auto-return-info")
             transcript_logging_widget = Static(
                 f"Transcript Logging: {self.app_info.transcript_logging}",
-                id="transcript-logging-info"
+                id="transcript-logging-info",
             )
             if self.app_info.transcript_logging != "OFF":
                 transcript_logging_widget.add_class("enabled")

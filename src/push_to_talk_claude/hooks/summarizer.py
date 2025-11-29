@@ -7,11 +7,11 @@ and extracting key action and outcome sentences.
 import re
 import sys
 from enum import Enum
-from typing import List, Optional, Set, Tuple
 
 
 class SentenceType(Enum):
     """Classification of sentence types based on content."""
+
     ACTION = "action"
     OUTCOME = "outcome"
     CONTEXT = "context"
@@ -21,23 +21,47 @@ class Summarizer:
     """Heuristic-based summarizer for Claude responses."""
 
     DEFAULT_ACTION_VERBS = {
-        "implemented", "created", "added", "fixed", "updated",
-        "removed", "deleted", "refactored", "optimized", "wrote",
-        "built", "deployed", "tested", "validated", "enhanced"
+        "implemented",
+        "created",
+        "added",
+        "fixed",
+        "updated",
+        "removed",
+        "deleted",
+        "refactored",
+        "optimized",
+        "wrote",
+        "built",
+        "deployed",
+        "tested",
+        "validated",
+        "enhanced",
     }
 
     DEFAULT_OUTCOME_INDICATORS = {
-        "complete", "ready", "success", "successful", "working",
-        "failed", "error", "issue", "problem", "done",
-        "finished", "pass", "passes", "passing", "running"
+        "complete",
+        "ready",
+        "success",
+        "successful",
+        "working",
+        "failed",
+        "error",
+        "issue",
+        "problem",
+        "done",
+        "finished",
+        "pass",
+        "passes",
+        "passing",
+        "running",
     }
 
     def __init__(
         self,
         max_sentences: int = 4,
         max_words: int = 100,
-        action_verbs: Optional[Set[str]] = None,
-        outcome_indicators: Optional[Set[str]] = None
+        action_verbs: set[str] | None = None,
+        outcome_indicators: set[str] | None = None,
     ) -> None:
         """Initialize summarizer with strategy parameters.
 
@@ -127,19 +151,19 @@ class Summarizer:
                 selected.append(context[0])
 
         # Check word count and trim if needed
-        summary = ' '.join(selected)
+        summary = " ".join(selected)
         summary_words = summary.split()
 
         if len(summary_words) > self.max_words:
             # Trim from the end, keeping action and outcome sentences
-            while len(selected) > 2 and len(' '.join(selected).split()) > self.max_words:
+            while len(selected) > 2 and len(" ".join(selected).split()) > self.max_words:
                 selected.pop()
 
             # If still over limit, truncate words directly
-            summary = ' '.join(selected)
+            summary = " ".join(selected)
             summary_words = summary.split()
             if len(summary_words) > self.max_words:
-                summary = ' '.join(summary_words[:self.max_words])
+                summary = " ".join(summary_words[: self.max_words])
 
         return summary.strip()
 
@@ -156,13 +180,13 @@ class Summarizer:
 
         # Check for action verbs with word boundaries
         for verb in self.action_verbs:
-            pattern = r'\b' + re.escape(verb) + r'\b'
+            pattern = r"\b" + re.escape(verb) + r"\b"
             if re.search(pattern, sentence_lower):
                 return SentenceType.ACTION
 
         # Check for outcome indicators with word boundaries
         for indicator in self.outcome_indicators:
-            pattern = r'\b' + re.escape(indicator) + r'\b'
+            pattern = r"\b" + re.escape(indicator) + r"\b"
             if re.search(pattern, sentence_lower):
                 return SentenceType.OUTCOME
 
@@ -179,10 +203,10 @@ class Summarizer:
             Text with code blocks removed
         """
         # Remove fenced code blocks (```...```)
-        pattern = r'```[\s\S]*?```'
-        return re.sub(pattern, '', text)
+        pattern = r"```[\s\S]*?```"
+        return re.sub(pattern, "", text)
 
-    def _split_sentences(self, text: str) -> List[str]:
+    def _split_sentences(self, text: str) -> list[str]:
         """Split text into sentences.
 
         Args:
@@ -193,25 +217,21 @@ class Summarizer:
         """
         # Split on sentence boundaries: period, exclamation, question mark
         # followed by whitespace and capital letter
-        pattern = r'[.!?]\s+(?=[A-Z])'
+        pattern = r"[.!?]\s+(?=[A-Z])"
         sentences = re.split(pattern, text)
 
         # Clean up and filter empty sentences
         sentences = [s.strip() for s in sentences if s.strip()]
 
         # Handle case where last sentence doesn't end with punctuation
-        if sentences and text.strip() and not text.strip()[-1] in '.!?':
+        if sentences and text.strip() and text.strip()[-1] not in ".!?":
             # Keep it as-is, it's already in the list
             pass
 
         return sentences
 
 
-def summarize_response(
-    text: str,
-    max_sentences: int = 4,
-    max_words: int = 100
-) -> str:
+def summarize_response(text: str, max_sentences: int = 4, max_words: int = 100) -> str:
     """Summarize response text using default strategy.
 
     Args:
@@ -233,28 +253,14 @@ def main():
     parser = argparse.ArgumentParser(
         description="Summarize Claude response text using heuristic extraction"
     )
+    parser.add_argument("text", nargs="?", help="Response text to summarize (or use --stdin)")
     parser.add_argument(
-        "text",
-        nargs="?",
-        help="Response text to summarize (or use --stdin)"
+        "--max-sentences", type=int, default=4, help="Maximum sentences in summary (2-10)"
     )
     parser.add_argument(
-        "--max-sentences",
-        type=int,
-        default=4,
-        help="Maximum sentences in summary (2-10)"
+        "--max-words", type=int, default=100, help="Maximum words in summary (50-200)"
     )
-    parser.add_argument(
-        "--max-words",
-        type=int,
-        default=100,
-        help="Maximum words in summary (50-200)"
-    )
-    parser.add_argument(
-        "--stdin",
-        action="store_true",
-        help="Read from stdin instead of argument"
-    )
+    parser.add_argument("--stdin", action="store_true", help="Read from stdin instead of argument")
 
     args = parser.parse_args()
 

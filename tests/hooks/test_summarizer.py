@@ -1,11 +1,8 @@
 """Unit tests for the summarizer module."""
 
 import pytest
-from push_to_talk_claude.hooks.summarizer import (
-    Summarizer,
-    SentenceType,
-    summarize_response
-)
+
+from push_to_talk_claude.hooks.summarizer import SentenceType, Summarizer, summarize_response
 
 
 class TestSentenceClassification:
@@ -34,7 +31,7 @@ class TestSentenceClassification:
             "Updated the configuration",
             "Fixed the bug in the parser",
             "Added error handling",
-            "Removed deprecated code"
+            "Removed deprecated code",
         ]
         for sentence in action_sentences:
             assert s.classify_sentence(sentence) == SentenceType.ACTION
@@ -47,7 +44,7 @@ class TestSentenceClassification:
             "All tests are passing",
             "The build was successful",
             "Everything is working now",
-            "The task is done"
+            "The task is done",
         ]
         for sentence in outcome_sentences:
             assert s.classify_sentence(sentence) == SentenceType.OUTCOME
@@ -80,7 +77,7 @@ class TestSummarization:
         text = "I implemented feature X. " * 20  # 100 words
         summary = s.summarize(text)
         assert len(summary.split()) <= 100
-        assert summary.count('.') <= 4
+        assert summary.count(".") <= 4
 
     def test_summarize_with_code_blocks(self):
         """Test that code blocks are removed before summarization."""
@@ -106,7 +103,7 @@ It works great.
         text = "First sentence. Second sentence. Third sentence. Fourth sentence. Fifth sentence."
         summary = s.summarize(text)
         # Should have at most 2 sentences
-        assert summary.count('.') <= 2
+        assert summary.count(".") <= 2
 
     def test_summarize_respects_max_words(self):
         """Test that summary respects max_words limit."""
@@ -118,7 +115,7 @@ It works great.
     def test_summarize_prioritizes_action_and_outcome(self):
         """Test that action and outcome sentences are prioritized."""
         s = Summarizer(max_sentences=2, max_words=100)
-        text = "Some context here. I implemented the feature. More context. All tests pass. Even more context."
+        text = "Some context. I implemented the feature. More context. All tests pass."
         summary = s.summarize(text)
         # Should contain the action and outcome sentences
         assert "implemented" in summary.lower()
@@ -191,7 +188,7 @@ class TestConvenienceFunction:
         """Test summarize_response with custom parameters."""
         text = "First. Second. Third. Fourth. Fifth."
         summary = summarize_response(text, max_sentences=2, max_words=50)
-        assert summary.count('.') <= 2
+        assert summary.count(".") <= 2
 
 
 class TestCodeBlockRemoval:

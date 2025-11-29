@@ -1,13 +1,12 @@
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
-from typing import Optional
 
 
 class NotificationManager:
     """Manage user notifications and error messages."""
 
-    def __init__(self, console: Optional[Console] = None) -> None:
+    def __init__(self, console: Console | None = None) -> None:
         """Initialize notification manager."""
         self.console = console or Console()
 
@@ -39,7 +38,8 @@ class NotificationManager:
         text.append("4. Enable access for your terminal app\n", style="white")
         text.append("5. Restart this application\n", style="white")
 
-        panel = Panel(text, border_style="red", padding=(1, 2), title="[bold red]Action Required[/bold red]")
+        title = "[bold red]Action Required[/bold red]"
+        panel = Panel(text, border_style="red", padding=(1, 2), title=title)
         self.console.print(panel)
 
     def startup_banner(self, hotkey: str, model: str, injection_mode: str = "focused") -> None:
@@ -47,19 +47,20 @@ class NotificationManager:
         text = Text()
         text.append("🎙️  Push-to-Talk Claude\n\n", style="bold cyan")
         text.append("Configuration:\n", style="bold white")
-        text.append(f"  Hotkey: ", style="dim")
+        text.append("  Hotkey: ", style="dim")
         text.append(f"{hotkey}\n", style="bold green")
-        text.append(f"  Whisper Model: ", style="dim")
+        text.append("  Whisper Model: ", style="dim")
         text.append(f"{model}\n", style="bold green")
-        text.append(f"  Injection Mode: ", style="dim")
-        mode_desc = "focused (active window)" if injection_mode == "focused" else "tmux (target pane)"
+        text.append("  Injection Mode: ", style="dim")
+        mode_desc = "focused (window)" if injection_mode == "focused" else "tmux (pane)"
         text.append(f"{mode_desc}\n\n", style="bold green")
         text.append("Press ", style="white")
         text.append(f"{hotkey}", style="bold green")
         text.append(" to start recording\n", style="white")
         text.append("Press Ctrl+C to exit", style="dim")
 
-        panel = Panel(text, border_style="cyan", padding=(1, 2), title="[bold cyan]Ready[/bold cyan]")
+        title = "[bold cyan]Ready[/bold cyan]"
+        panel = Panel(text, border_style="cyan", padding=(1, 2), title=title)
         self.console.print(panel)
 
     def shutdown_message(self) -> None:
