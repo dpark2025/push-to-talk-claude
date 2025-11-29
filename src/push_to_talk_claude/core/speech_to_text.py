@@ -142,7 +142,7 @@ class SpeechToText:
         """
         import subprocess
 
-        script = f'''
+        script = f"""
 import os
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
@@ -156,7 +156,7 @@ torch.set_num_threads(1)
 import whisper
 model = whisper.load_model("{self._model_name}", device="{self._device}")
 print("Model loaded successfully")
-'''
+"""
 
         try:
             proc = subprocess.run(
@@ -216,7 +216,7 @@ print("Model loaded successfully")
         try:
             # Run transcription in a completely separate Python process
             # This avoids all FD inheritance issues
-            script = f'''
+            script = f"""
 import os
 os.environ["OMP_NUM_THREADS"] = "1"
 os.environ["MKL_NUM_THREADS"] = "1"
@@ -250,7 +250,7 @@ confidence = 1.0 - no_speech_prob
 with open("{result_path}", "w") as f:
     data = {{"text": text, "language": detected_language, "confidence": confidence, "error": None}}
     json.dump(data, f)
-'''
+"""
 
             proc = subprocess.run(
                 ["python", "-c", script], capture_output=True, timeout=timeout_seconds, text=True
