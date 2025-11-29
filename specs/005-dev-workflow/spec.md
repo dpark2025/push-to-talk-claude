@@ -2,7 +2,7 @@
 
 **Feature Branch**: `005-dev-workflow`
 **Created**: 2025-11-28
-**Status**: Draft
+**Status**: Completed
 **Input**: User description: "Add minimal dev workflow processes and GitHub workflow integrations: CI workflow (ruff lint, ruff format check, pytest on PR/push to main), pre-commit hooks config, PR template, dependabot for dependency updates, and issue templates for bugs/features. Start with P1 items (CI + pre-commit) then P2 (PR template, dependabot)."
 
 ## Overview
