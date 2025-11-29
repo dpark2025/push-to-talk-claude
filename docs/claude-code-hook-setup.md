@@ -69,7 +69,27 @@ uv sync
 
 ---
 
-## Setup Instructions
+## Quick Install (Recommended)
+
+Run the install script to automatically configure the hook:
+
+```bash
+./scripts/install-claude-tts-hook.sh
+```
+
+This script will:
+- Check prerequisites (jq, macOS, Claude Code)
+- Make the hook script executable
+- Configure Claude Code's `settings.json` with the Stop hook
+- Create the `~/.claude-voice` directory
+
+After running, start the TUI with `uv run claude-voice` and press `s` to enable TTS.
+
+If you prefer manual setup or need to troubleshoot, follow the detailed steps below.
+
+---
+
+## Manual Setup Instructions
 
 ### Step 1: Locate the Hook Script
 
