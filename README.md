@@ -308,12 +308,28 @@ git clone https://github.com/dpark2025/push-to-talk-claude.git
 cd push-to-talk-claude
 uv sync
 
+# Set up pre-commit hooks (recommended)
+pip install pre-commit
+pre-commit install
+
 # Run tests
 uv run pytest
 
 # Run with debug logging
 uv run claude-voice --debug
 ```
+
+### Code Quality
+
+Before submitting a PR, ensure your code passes all checks:
+
+```bash
+uv run ruff check --fix .   # Lint (with auto-fix)
+uv run ruff format .        # Format
+uv run pytest               # Tests
+```
+
+CI will automatically run these checks on all PRs.
 
 ## License
 
@@ -324,8 +340,10 @@ MIT
 Contributions welcome! Please:
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
+3. Set up pre-commit hooks (`pre-commit install`)
+4. Make your changes
+5. Ensure all checks pass (`ruff check`, `ruff format`, `pytest`)
+6. Submit a pull request
 
 ---
 
